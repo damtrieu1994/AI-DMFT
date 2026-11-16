@@ -345,6 +345,7 @@ section[data-panel="ai"]>#aiViewer{margin-bottom:0!important}}
 </style>
 <style>
 a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
+.step{padding:8px 9px;gap:7px}.step .t b{font-size:14px}.step .t span{font-size:11px}.step .n{width:26px;height:26px}
 .simbar{background:var(--warn-soft);color:var(--warn);font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
 .view{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .view .pic{aspect-ratio:4/3;background:#0b0f12;display:grid;place-items:center;color:#9fb0b8;font-size:13px}
@@ -382,10 +383,20 @@ section>.row{margin-top:16px}
   <div class="fld"><label for="fSwell">Sưng nướu/mặt trong 4 tuần qua?</label><select id="fSwell"><option value="">-- chọn --</option><option value="0">Không</option><option value="1">Có</option></select></div>
  </div>
 </div>
- <div class="row noprint"><button class="btn pri" data-go="2">Tiếp: năm ảnh →</button></div>
+ <div class="row noprint"><button class="btn pri" data-go="2">Tiếp: khám lâm sàng →</button></div>
 </section>
 
 <section id="s2" hidden>
+ <h1>Khám lâm sàng</h1><p class="lead">Người khám ghi mã thân răng WHO 2013 cho 28 răng. Đây là chuẩn tham chiếu để so với AI. Trong nghiên cứu thật, người khám không xem ảnh hay kết quả AI, và nha sĩ đọc ảnh không xem phần này; app chỉ hiện lại kết quả khám ở bước Kết quả.</p>
+ <div class="panel" style="margin-bottom:14px">
+  <div class="row noprint"><button class="btn" id="btnCliSound">Điền tất cả là lành (0)</button><button class="btn" id="btnCliSample">Điền theo ca mô phỏng</button><button class="btn" id="btnCliClear">Xoá phiếu khám</button><span class="note" id="cliMsg"></span></div>
+  <div class="chartbox" style="margin-top:12px"><div class="jawlab"><span>Phải bệnh nhân</span><span>Hàm trên</span><span>Trái bệnh nhân</span></div><div class="chart-scroll" style="--nc:7"><div class="arch" id="archCU"></div><div class="archsep"></div><div class="arch" id="archCL"></div></div><div class="jawlab" style="margin-top:4px"><span></span><span>Hàm dưới</span><span></span></div><div class="palette" id="palC"></div><div class="chart-tools"><span id="selInfoC"></span><span>Mã thân răng WHO 2013</span></div></div>
+  <div class="row" style="margin-top:10px"><label for="fUrg" style="margin:0">Mức can thiệp (WHO 2013):</label><select id="fUrg" style="width:auto;max-width:100%"><option value="">-- chưa ghi --</option><option value="0">0 · Không cần điều trị</option><option value="1">1 · Cần điều trị dự phòng hoặc thường quy</option><option value="2">2 · Cần điều trị sớm (kể cả cạo vôi)</option><option value="3">3 · Cần điều trị ngay do đau hoặc nhiễm trùng</option><option value="4">4 · Chuyển khám toàn diện hoặc điều trị nội khoa/nha khoa</option></select></div>
+ </div>
+ <div class="row noprint"><button class="btn" data-go="1">← Quay lại</button><button class="btn pri" data-go="3">Tiếp: năm ảnh →</button><span class="note">Có thể bỏ qua bước này khi chỉ muốn trình bày phần AI.</span></div>
+</section>
+
+<section id="s3" hidden>
  <h1>Năm ảnh trong miệng</h1><p class="lead">Chọn ca mô phỏng rồi dùng ảnh minh hoạ, hoặc tải ảnh thật vào từng ô. Cần đủ năm góc trước khi chạy AI.</p>
  <div class="panel" style="margin-bottom:14px">
   <div class="row"><label for="fCase" style="margin:0">Ca mô phỏng:</label>
@@ -395,18 +406,18 @@ section>.row{margin-top:16px}
   <p class="note">Ảnh minh hoạ là hình vẽ sơ đồ, vẽ đúng theo ca mô phỏng (chấm sẫm = lỗ sâu, mảng xám = miếng trám, khoảng trống = răng vắng). Với ảnh thật bạn tải lên, bản mô phỏng chỉ kiểm tra chất lượng ảnh thật sự; phần đánh số răng và chẩn đoán vẫn lấy theo ca mô phỏng.</p>
   <div class="photos" id="views"></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="1">← Quay lại</button><button class="btn pri" id="btnRun" disabled>Chạy AI (mô phỏng) →</button><span class="note" id="runMsg"></span></div>
+ <div class="row noprint"><button class="btn" data-go="2">← Quay lại</button><button class="btn pri" id="btnRun" disabled>Chạy AI (mô phỏng) →</button><span class="note" id="runMsg"></span></div>
 </section>
 
-<section id="s3" hidden>
+<section id="s4" hidden>
  <h1>AI phân tích</h1><p class="lead">Sáu bước xử lý của công cụ: SegmentAnyTooth đánh số răng, mô hình phân loại từng răng, rồi quy tắc tính chỉ số.</p>
  <div class="panel" style="margin-bottom:14px"><ol class="pipe" id="pipe"></ol>
   <div class="row" style="margin-top:10px"><label for="fT" style="margin:0">Ngưỡng quyết định T = <b id="tVal">0,50</b></label><input type="range" id="fT" min="0.3" max="0.9" step="0.05" value="0.5" style="flex:1;min-width:180px"><span class="note">T cao → ít dương tính giả, dễ bỏ sót hơn. Trong nghiên cứu thật, T được khoá trước khi kiểm định.</span></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="2">← Quay lại</button><button class="btn pri" id="btnToChart" disabled>Xem hồ sơ AI điền sẵn →</button></div>
+ <div class="row noprint"><button class="btn" data-go="3">← Quay lại</button><button class="btn pri" id="btnToChart" disabled>Xem hồ sơ AI điền sẵn →</button></div>
 </section>
 
-<section id="s4" hidden>
+<section id="s5" hidden>
  <h1>Nha sĩ kiểm tra và xác nhận</h1><p class="lead">AI đề xuất, nha sĩ quyết định. Bấm một răng rồi chọn mã (hoặc gõ phím số) để sửa.</p>
  <div class="panel" style="margin-bottom:14px">
   <div class="row" style="justify-content:space-between"><span class="pill mute">Hồ sơ AI điền sẵn</span><span class="row"><span class="note" style="margin:0">Thời gian</span><span class="clock" id="clock">0:00</span></span></div>
@@ -414,16 +425,16 @@ section>.row{margin-top:16px}
   <div class="chartbox"><div class="jawlab"><span>Phải bệnh nhân</span><span>Hàm trên</span><span>Trái bệnh nhân</span></div><div class="chart-scroll" style="--nc:7"><div class="arch" id="archU"></div><div class="archsep"></div><div class="arch" id="archL"></div></div><div class="jawlab" style="margin-top:4px"><span></span><span>Hàm dưới</span><span></span></div><div class="palette" id="pal"></div><div class="chart-tools"><span id="selInfo">Bấm một răng rồi chọn mã. Phím <span class="kbd">0</span>–<span class="kbd">9</span>.</span><span><span class="pill warn">?</span> AI không chắc · viền vàng = đã sửa</span></div></div>
   <div class="row" style="margin-top:10px"><label for="fMiss" style="margin:0">Lý do răng vắng (hỏi người tham gia):</label><select id="fMiss" style="width:auto"><option value="">không có răng vắng / chưa hỏi</option><option value="caries">mất do sâu</option><option value="other">lý do khác (chỉnh nha, chấn thương, chưa mọc)</option><option value="unk">không rõ</option></select></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="3">← Quay lại</button><button class="btn lock" id="btnConfirm">Xác nhận và khoá hồ sơ →</button></div>
+ <div class="row noprint"><button class="btn" data-go="4">← Quay lại</button><button class="btn lock" id="btnConfirm">Xác nhận và khoá hồ sơ →</button></div>
 </section>
 
-<section id="s5" hidden>
+<section id="s6" hidden>
  <h1>Kết quả</h1><p class="lead">Chỉ số DMFT trên 28 răng, nhu cầu điều trị và thông tin sử dụng.</p>
  <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">Chỉ số DMFT (28 răng)</h2><div class="dmft" id="kpi"></div><p class="note" id="mNote"></p>
   <h2>Nhu cầu điều trị</h2><div id="need"></div><div id="needTeeth" class="note" style="margin-top:6px"></div>
   <h2>Sử dụng</h2><div id="useBox" class="note"></div></div>
- <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">Minh hoạ kiểm định: so với khám lâm sàng (chuẩn tham chiếu)</h2>
-  <p class="note">Trong nghiên cứu thật, người khám ghi mã WHO 2013 độc lập và không xem ảnh hay AI. Ở đây bấm nút để lấy “kết quả khám” của ca mô phỏng và xem cách tính.</p>
+ <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">So với khám lâm sàng (chuẩn tham chiếu)</h2>
+  <p class="note" id="refNote"></p>
   <button class="btn noprint" id="btnRef">Lấy kết quả khám mô phỏng và so sánh</button><div id="cmp" style="margin-top:10px"></div></div>
  <div class="row noprint"><button class="btn" id="btnJson">Tải .json</button><button class="btn" id="btnCsv">Tải .csv (theo răng)</button><button class="btn" onclick="print()">In phiếu</button><button class="btn pri" id="btnNew2">+ Phiếu mới</button></div>
 </section>
@@ -435,11 +446,14 @@ const U=[17,16,15,14,13,12,11,21,22,23,24,25,26,27], L=[47,46,45,44,43,42,41,31,
 const VIEWS=[{k:"F",l:"Chính diện",t:[13,12,11,21,22,23,43,42,41,31,32,33]},{k:"R",l:"Ngoài phải",t:[17,16,15,14,13,47,46,45,44,43]},{k:"L",l:"Ngoài trái",t:[23,24,25,26,27,33,34,35,36,37]},{k:"MX",l:"Nhai hàm trên",t:U},{k:"MD",l:"Nhai hàm dưới",t:L}];
 const CODES=[["0","Lành"],["1","Sâu"],["2","Trám có sâu"],["3","Trám không sâu"],["4","Vắng"],["7","Phục hình"],["9","Không đánh giá được"]];
 const kind=c=>c==="1"||c==="2"?"D":c==="3"?"F":c==="4"?"M":c==="9"?"X":c==="7"?"X":"S";
-const STEPS=[["1","Thông tin","mã, triệu chứng"],["2","Năm ảnh","chụp, kiểm tra chất lượng"],["3","AI phân tích","đánh số răng, phân loại"],["4","Nha sĩ xác nhận","kiểm tra, sửa"],["5","Kết quả","DMFT, nhu cầu điều trị"]];
-const blank=()=>({id:"",age:"",pain:"",swell:"",cas:"2",seed:0,photos:{},truth:null,prob:null,T:0.5,ai0:null,codes:null,miss:"",t0:null,t1:null,locked:false,ref:false,step:1,max:1,ran:false});
+const STEPS=[["1","Thông tin","mã, triệu chứng"],["2","Khám lâm sàng","mã WHO 2013"],["3","Năm ảnh","chụp, kiểm tra chất lượng"],["4","AI phân tích","đánh số răng, phân loại"],["5","Nha sĩ xác nhận","kiểm tra, sửa"],["6","Kết quả","DMFT, nhu cầu điều trị"]];
+const CCODES=[["0","Lành"],["1","Sâu"],["2","Trám, có sâu"],["3","Trám, không sâu"],["4","Mất do sâu"],["5","Mất do lý do khác"],["6","Trám bít hố rãnh"],["7","Trụ cầu, mão, veneer, implant"],["8","Chưa mọc"],["9","Không ghi nhận"]];
+const kindC=c=>c==="1"||c==="2"?"D":c==="3"?"F":c==="4"?"M":c==="0"||c==="6"?"S":"X";
+const pn=c=>c==="5"||c==="8"?"4":c==="6"?"0":c; /* quy mã khám về mã đọc ảnh */
+const blank=()=>({id:"",age:"",pain:"",swell:"",cas:"2",seed:0,photos:{},truth:null,prob:null,T:0.5,ai0:null,codes:null,miss:"",t0:null,t1:null,locked:false,ref:false,step:1,max:1,ran:false,cli:null,cliSample:false,urg:""});
 let S=blank();
-try{const x=JSON.parse(localStorage.getItem("aidmft-sim")||"null");if(x)S=Object.assign(blank(),x);}catch(e){}
-const save=()=>{try{localStorage.setItem("aidmft-sim",JSON.stringify(S));}catch(e){}};
+try{const x=JSON.parse(localStorage.getItem("aidmft-sim3")||"null");if(x)S=Object.assign(blank(),x);}catch(e){}
+const save=()=>{try{localStorage.setItem("aidmft-sim3",JSON.stringify(S));}catch(e){}};
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const hash=s=>{let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 
@@ -464,7 +478,7 @@ function makeCase(){
     if(c==="3"||c==="2"){if(isAnt&&r()<0.5)pF=0.2+r()*0.35;else pF=0.6+r()*0.39;}
     if(c==="0"&&r()<0.08){pD=0.45+r()*0.4;stain=true;}
     prob[t]={pD:+pD.toFixed(2),pF:+pF.toFixed(2),absent:c==="4",hidden,stain};});
-  S.truth=truth;S.prob=prob;}
+  S.truth=truth;S.prob=prob;if(S.cliSample)S.cli={...truth};}
 function aiCodes(T){const o={};T28.forEach(t=>{const p=S.prob[t];o[t]=p.absent?"4":(p.pD>=T&&p.pF>=T)?"2":p.pD>=T?"1":p.pF>=T?"3":"0";});return o;}
 const needsReview=(t,T)=>{const p=S.prob[t];return !p.absent&&(Math.abs(p.pD-T)<0.15||Math.abs(p.pF-T)<0.15);};
 
@@ -491,10 +505,10 @@ function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onlo
 /* ----- giao diện ----- */
 function go(n){if(n>S.max)return;S.step=n;save();render();window.scrollTo(0,0);}
 function render(){
-  $("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"Chưa có mã";
-  for(let i=1;i<=5;i++)$("#s"+i).hidden=i!==S.step;
-  $("#fId").value=S.id;$("#fAge").value=S.age;$("#fPain").value=S.pain;$("#fSwell").value=S.swell;$("#fCase").value=S.cas;$("#fMiss").value=S.miss;
-  if(S.step===2)renderViews();if(S.step===3)renderPipe(false);if(S.step===4)renderChart();if(S.step===5)renderResult();}
+  $("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===6&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===6&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"Chưa có mã";
+  for(let i=1;i<=6;i++)$("#s"+i).hidden=i!==S.step;
+  $("#fId").value=S.id;$("#fAge").value=S.age;$("#fPain").value=S.pain;$("#fSwell").value=S.swell;$("#fCase").value=S.cas;$("#fMiss").value=S.miss;$("#fUrg").value=S.urg;
+  if(S.step===2)renderCli();if(S.step===3)renderViews();if(S.step===4)renderPipe(false);if(S.step===5)renderChart();if(S.step===6)renderResult();}
 function picHTML(v,overlay){const p=S.photos[v.k];if(!p)return`<span>Chưa có ảnh</span>`;return p.sample?svgView(v,overlay):`<img src="${p.src}" alt="${v.l}">`;}
 function renderViews(){
   $("#views").innerHTML=VIEWS.map(v=>{const p=S.photos[v.k];const q=!p?"":p.sample?`<span class="pill ok">đạt</span>`:(p.q&&p.q.issues.length?`<span class="pill bad" title="${p.q.issues.join(", ")}">${p.q.issues[0]}</span>`:`<span class="pill ok">đạt</span>`);
@@ -509,7 +523,16 @@ function renderPipe(animate){const ol=$("#pipe");$("#fT").value=S.T;$("#tVal").t
   clearInterval(pipeTimer);
   if(animate){let k=0;paint(0);$("#btnToChart").disabled=true;pipeTimer=setInterval(()=>{k++;paint(k);if(k>=PIPE.length){clearInterval(pipeTimer);S.ran=true;S.ai0=aiCodes(S.T);$("#btnToChart").disabled=false;save();}},650);}
   else{paint(S.ran?PIPE.length:-1);$("#btnToChart").disabled=!S.ran;}}
-let sel=null;
+let sel=null,selC=null;
+const cliN=()=>S.cli?T28.filter(t=>S.cli[t]!=null&&S.cli[t]!=="").length:0, cliOK=()=>cliN()===28;
+function cliBtn(t){const c=S.cli&&S.cli[t]!=null?S.cli[t]:"";const cls=["tooth","k-"+(c===""?"S":kindC(c))];if(selC===t)cls.push("sel");
+  return`<button type="button" class="${cls.join(" ")}" data-ct="${t}"><span class="tn">${t}</span><span class="tc">${c===""?"–":c}</span><span class="tp"></span></button>`;}
+function renderCli(){const arch=a=>a.slice(0,7).map(cliBtn).join("")+'<span class="mid"></span>'+a.slice(7).map(cliBtn).join("");
+  $("#archCU").innerHTML=arch(U);$("#archCL").innerHTML=arch(L);
+  $("#palC").innerHTML=CCODES.map(([c,l])=>`<button type="button" class="pc k-${kindC(c)}" data-cc="${c}" ${selC?"":"disabled"}><span class="k">${c}</span>${l}</button>`).join("");
+  $("#selInfoC").innerHTML=selC?`Răng <b class="mono" style="color:var(--fg);font-size:14px">${selC}</b> · chọn mã bên trên`:'Bấm một răng rồi chọn mã. Phím <span class="kbd">0</span>–<span class="kbd">9</span>.';
+  const n=cliN();let m=`Đã ghi ${n}/28 răng.`;if(n===28){const i=idx(S.cli);m+=` D = ${i.D}, M = ${i.M}, F = ${i.F}, DMFT = ${i.T}.`;}$("#cliMsg").textContent=m;}
+function setCli(t,c){if(!S.cli)S.cli={};S.cli[t]=c;S.cliSample=false;const i=T28.indexOf(t);selC=T28[Math.min(27,i+1)];save();renderCli();}
 function toothBtn(t){const c=S.codes[t],k=c==="4"?"M":c==="7"||c==="9"?"X":kind(c),p=S.prob[t];const cls=["tooth","k-"+k];if(sel===t)cls.push("sel");const ed=c!==S.ai0[t];if(ed)cls.push("edit");if(S.locked)cls.push("dis");
   const pr=p.absent?"vắng":"s "+p.pD.toFixed(2).replace(".",",");return`<button type="button" class="${cls.join(" ")}" data-t="${t}" ${S.locked?"disabled":""} title="AI: ${S.ai0[t]} · p(sâu) ${p.pD} · p(trám) ${p.pF}"><span class="tn">${t}</span><span class="tc">${c}</span><span class="tp">${pr}</span>${!ed&&needsReview(t,S.T)?'<span class="flag">?</span>':""}</button>`;}
 function renderChart(){
@@ -534,41 +557,49 @@ function renderResult(){const i=idx(S.codes);
   const ch=T28.filter(t=>S.codes[t]!==S.ai0[t]);const sec=S.t0&&S.t1?(S.t1-S.t0)/1000:0;
   $("#useBox").innerHTML=`Thời gian kiểm tra và xác nhận: <b>${fmtT(sec)}</b> · Số răng nha sĩ sửa so với AI: <b>${ch.length}</b>${ch.length?" ("+ch.map(t=>t+": "+S.ai0[t]+"→"+S.codes[t]).join("; ")+")":""} · Ngưỡng T = ${S.T.toFixed(2).replace(".",",")}`;
   renderCmp();}
-function renderCmp(){if(!S.ref){$("#cmp").innerHTML="";return;}
-  const two=c=>{let tp=0,fp=0,fn=0,tn=0;T28.forEach(t=>{const r=kind(S.truth[t])==="D",x=kind(c[t])==="D";if(r&&x)tp++;else if(!r&&x)fp++;else if(r&&!x)fn++;else tn++;});return{tp,fp,fn,tn};};
-  const pc=(a,b)=>b?(100*a/b).toFixed(0)+"%":"–";const C=idx(S.truth),A=idx(S.ai0),F=idx(S.codes);const a=two(S.ai0),f=two(S.codes);
-  const beh={kg:0,sd:0,ss:0,gs:0};T28.forEach(t=>{const ok0=S.ai0[t]===S.truth[t],ok1=S.codes[t]===S.truth[t];if(ok0&&ok1)beh.kg++;else if(!ok0&&ok1)beh.sd++;else if(ok0&&!ok1)beh.ss++;else beh.gs++;});
-  const hid=T28.filter(t=>S.prob[t].hidden).length;
+function renderCmp(){const real=cliOK();const R=real?S.cli:(S.ref?S.truth:null);$("#btnRef").hidden=real;
+  $("#refNote").textContent=real?"Chuẩn tham chiếu là kết quả khám lâm sàng đã nhập ở bước 2 (đủ 28 răng).":"Chưa nhập đủ 28 răng ở bước Khám lâm sàng ("+cliN()+"/28). Có thể quay lại bước 2 để nhập, hoặc bấm nút để lấy “kết quả khám” của ca mô phỏng và xem cách tính.";
+  if(!R){$("#cmp").innerHTML="";return;}
+  const two=c=>{let tp=0,fp=0,fn=0,tn=0;T28.forEach(t=>{const r=kind(R[t])==="D",x=kind(c[t])==="D";if(r&&x)tp++;else if(!r&&x)fp++;else if(r&&!x)fn++;else tn++;});return{tp,fp,fn,tn};};
+  const pc=(a,b)=>b?(100*a/b).toFixed(0)+"%":"–";const C=idx(R),A=idx(S.ai0),F=idx(S.codes);const a=two(S.ai0),f=two(S.codes);
+  const beh={kg:0,sd:0,ss:0,gs:0};T28.forEach(t=>{const ok0=S.ai0[t]===pn(R[t]),ok1=S.codes[t]===pn(R[t]);if(ok0&&ok1)beh.kg++;else if(!ok0&&ok1)beh.sd++;else if(ok0&&!ok1)beh.ss++;else beh.gs++;});
+  const hid=T28.filter(t=>S.prob[t].hidden).length;const nd=c=>idx(c).D>0?"có":"không";
   $("#cmp").innerHTML=`<div class="tbwrap"><table class="tb"><tr><th></th><th>D</th><th>M</th><th>F</th><th>DMFT</th><th>Sai số so với khám</th><th>Độ nhạy răng sâu</th><th>Độ đặc hiệu</th></tr>
-  <tr><td>Khám lâm sàng (chuẩn)</td><td class="num">${C.D}</td><td class="num">${C.M}</td><td class="num">${C.F}</td><td class="num"><b>${C.T}</b></td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+  <tr><td>${real?"Khám lâm sàng (chuẩn)":"Khám lâm sàng (mô phỏng)"}</td><td class="num">${C.D}</td><td class="num">${C.M}</td><td class="num">${C.F}</td><td class="num"><b>${C.T}</b></td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
   <tr><td>AI nguyên bản</td><td class="num">${A.D}</td><td class="num">${A.M}</td><td class="num">${A.F}</td><td class="num"><b>${A.T}</b></td><td class="num">${A.T-C.T>0?"+":""}${A.T-C.T}</td><td class="num">${pc(a.tp,a.tp+a.fn)} (${a.tp}/${a.tp+a.fn})</td><td class="num">${pc(a.tn,a.tn+a.fp)} (${a.tn}/${a.tn+a.fp})</td></tr>
   <tr><td>Sau khi nha sĩ xác nhận</td><td class="num">${F.D}</td><td class="num">${F.M}</td><td class="num">${F.F}</td><td class="num"><b>${F.T}</b></td><td class="num">${F.T-C.T>0?"+":""}${F.T-C.T}</td><td class="num">${pc(f.tp,f.tp+f.fn)} (${f.tp}/${f.tp+f.fn})</td><td class="num">${pc(f.tn,f.tn+f.fp)} (${f.tn}/${f.tn+f.fp})</td></tr></table></div>
-  <p class="note">Hành vi sửa (28 răng): AI đúng – giữ ${beh.kg} · AI sai – sửa đúng ${beh.sd} · AI đúng – sửa sai ${beh.ss} · AI sai – giữ ${beh.gs}. Trong ca này có ${hid} răng sâu không thấy được trên ảnh (ví dụ sâu mặt bên): cả AI lẫn nha sĩ đọc ảnh đều khó phát hiện – đây là “trần hiệu năng” của ảnh mà nghiên cứu cần đo.</p>`;}
+  <p class="note">Cần điều trị sâu răng (mức người): khám lâm sàng <b>${nd(R)}</b> · AI <b>${nd(S.ai0)}</b> · sau xác nhận <b>${nd(S.codes)}</b>${S.urg!==""?" · Mức can thiệp WHO do người khám ghi: <b>"+S.urg+"</b>":""}. Trên ảnh, răng vắng (mã 4) được tính vào M; khám lâm sàng chỉ tính mã 4 (mất do sâu).</p>
+  <p class="note">Hành vi sửa (28 răng): AI đúng – giữ ${beh.kg} · AI sai – sửa đúng ${beh.sd} · AI đúng – sửa sai ${beh.ss} · AI sai – giữ ${beh.gs}.${!real||S.cliSample?` Trong ca này có ${hid} răng sâu không thấy được trên ảnh (ví dụ sâu mặt bên): cả AI lẫn nha sĩ đọc ảnh đều khó phát hiện – đây là “trần hiệu năng” của ảnh mà nghiên cứu cần đo.`:""}</p>`;}
 function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-function reset(){if(S.max>1&&!confirm("Tạo phiếu mới? Dữ liệu phiếu hiện tại trên máy sẽ bị xoá."))return;S=blank();sel=null;save();render();}
+function reset(){selC=null;if(S.max>1&&!confirm("Tạo phiếu mới? Dữ liệu phiếu hiện tại trên máy sẽ bị xoá."))return;S=blank();sel=null;save();render();}
 
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.go){const n=+b.dataset.go;if(n===2&&S.step===1){S.max=Math.max(S.max,2);} go(n);return;}
+  if(b.dataset.go){const n=+b.dataset.go;if(n===S.step+1&&S.step<=2){S.max=Math.max(S.max,n);} go(n);return;}
   if(b.id==="btnNew"||b.id==="btnNew2"){reset();return;}
-  if(b.id==="btnSample"){makeCase();VIEWS.forEach(v=>S.photos[v.k]={sample:true});S.ran=false;S.ai0=null;S.codes=null;S.locked=false;S.ref=false;S.max=2;save();renderViews();return;}
-  if(b.id==="btnRun"){if(!S.truth)makeCase();S.ran=false;S.locked=false;S.codes=null;S.ref=false;S.max=3;S.step=3;save();render();renderPipe(true);return;}
-  if(b.id==="btnToChart"){S.ai0=aiCodes(S.T);if(!S.codes||S.locked===false&&!S.t0)S.codes={...S.ai0};if(!S.t0)S.t0=Date.now();S.max=Math.max(S.max,4);go(4);return;}
+  if(b.dataset.ct){selC=+b.dataset.ct;renderCli();return;}
+  if(b.dataset.cc!==undefined&&selC){setCli(selC,b.dataset.cc);return;}
+  if(b.id==="btnCliSound"){S.cli={};T28.forEach(t=>S.cli[t]="0");S.cliSample=false;save();renderCli();return;}
+  if(b.id==="btnCliSample"){if(!S.truth)makeCase();S.cli={...S.truth};S.cliSample=true;save();renderCli();return;}
+  if(b.id==="btnCliClear"){S.cli=null;S.cliSample=false;selC=null;save();renderCli();return;}
+  if(b.id==="btnSample"){makeCase();VIEWS.forEach(v=>S.photos[v.k]={sample:true});S.ran=false;S.ai0=null;S.codes=null;S.locked=false;S.ref=false;S.max=3;save();renderViews();return;}
+  if(b.id==="btnRun"){if(!S.truth)makeCase();S.ran=false;S.locked=false;S.codes=null;S.ref=false;S.max=4;S.step=4;save();render();renderPipe(true);return;}
+  if(b.id==="btnToChart"){S.ai0=aiCodes(S.T);if(!S.codes||S.locked===false&&!S.t0)S.codes={...S.ai0};if(!S.t0)S.t0=Date.now();S.max=Math.max(S.max,5);go(5);return;}
   if(b.dataset.t&&!S.locked){sel=+b.dataset.t;renderChart();return;}
   if(b.dataset.c!==undefined&&sel&&!S.locked){S.codes[sel]=b.dataset.c;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();return;}
-  if(b.id==="btnConfirm"){S.t1=Date.now();S.locked=true;sel=null;S.max=5;go(5);return;}
+  if(b.id==="btnConfirm"){S.t1=Date.now();S.locked=true;sel=null;S.max=6;go(6);return;}
   if(b.id==="btnRef"){S.ref=true;save();renderCmp();return;}
-  if(b.id==="btnJson"){const i=idx(S.codes);dl((S.id||"AI-DMFT")+".json",JSON.stringify({ghi_chu:"BAN MO PHONG - khong phai du lieu that",ma:S.id,tuoi:S.age,dau:S.pain,sung:S.swell,ca_mo_phong:S.cas,nguong_T:S.T,ma_AI:S.ai0,ma_cuoi:S.codes,xac_suat:S.prob,D:i.D,M:i.M,F:i.F,DMFT:i.T,ly_do_rang_vang:S.miss,nhu_cau_dieu_tri:need(S.codes)[1],giay:S.t0&&S.t1?(S.t1-S.t0)/1000:null,khoa_luc:S.t1?new Date(S.t1).toISOString():null},null,1),"application/json");return;}
-  if(b.id==="btnCsv"){dl((S.id||"AI-DMFT")+"_rang.csv","﻿ma,rang,p_sau,p_tram,ma_AI,ma_cuoi,can_xem,da_sua\n"+T28.map(t=>[S.id,t,S.prob[t].pD,S.prob[t].pF,S.ai0[t],S.codes[t],needsReview(t,S.T)?1:0,S.codes[t]!==S.ai0[t]?1:0].join(",")).join("\n"),"text/csv");return;}});
+  if(b.id==="btnJson"){const i=idx(S.codes);dl((S.id||"AI-DMFT")+".json",JSON.stringify({ghi_chu:"BAN MO PHONG - khong phai du lieu that",ma:S.id,tuoi:S.age,dau:S.pain,sung:S.swell,ca_mo_phong:S.cas,nguong_T:S.T,ma_kham:S.cli,muc_can_thiep_WHO:S.urg,ma_AI:S.ai0,ma_cuoi:S.codes,xac_suat:S.prob,D:i.D,M:i.M,F:i.F,DMFT:i.T,ly_do_rang_vang:S.miss,nhu_cau_dieu_tri:need(S.codes)[1],giay:S.t0&&S.t1?(S.t1-S.t0)/1000:null,khoa_luc:S.t1?new Date(S.t1).toISOString():null},null,1),"application/json");return;}
+  if(b.id==="btnCsv"){dl((S.id||"AI-DMFT")+"_rang.csv","﻿ma,rang,ma_kham,p_sau,p_tram,ma_AI,ma_cuoi,can_xem,da_sua\n"+T28.map(t=>[S.id,t,S.cli&&S.cli[t]!=null?S.cli[t]:"",S.prob[t].pD,S.prob[t].pF,S.ai0[t],S.codes[t],needsReview(t,S.T)?1:0,S.codes[t]!==S.ai0[t]?1:0].join(",")).join("\n"),"text/csv");return;}});
 document.addEventListener("input",e=>{const el=e.target;
   if(el.id==="fId"){S.id=el.value.trim();save();}if(el.id==="fAge"){S.age=el.value;save();}
-  if(el.id==="fT"){S.T=+el.value;$("#tVal").textContent=S.T.toFixed(2).replace(".",",");if(S.ran){S.ai0=aiCodes(S.T);if(!S.locked){S.codes=null;S.t0=null;S.max=3;}renderPipe(false);renderStepsOnly();}save();}});
-function renderStepsOnly(){$("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"Chưa có mã";}
+  if(el.id==="fT"){S.T=+el.value;$("#tVal").textContent=S.T.toFixed(2).replace(".",",");if(S.ran){S.ai0=aiCodes(S.T);if(!S.locked){S.codes=null;S.t0=null;S.max=4;}renderPipe(false);renderStepsOnly();}save();}});
+function renderStepsOnly(){$("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===6&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===6&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"Chưa có mã";}
 document.addEventListener("change",async e=>{const el=e.target;
-  if(el.id==="fPain"){S.pain=el.value;save();}if(el.id==="fSwell"){S.swell=el.value;save();}if(el.id==="fMiss"){S.miss=el.value;save();}
-  if(el.id==="fCase"){S.cas=el.value;S.truth=null;if(VIEWS.some(v=>S.photos[v.k]&&S.photos[v.k].sample)){makeCase();}S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}
-  if(el.dataset&&el.dataset.up){const f=el.files[0];if(!f)return;const k=el.dataset.up;const {full,small}=await shrink(f);const q=await checkImage(full);S.photos[k]={sample:false,src:small,q};if(!S.truth)makeCase();S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}});
-document.addEventListener("keydown",e=>{if(S.step!==4||!sel||S.locked||e.target.matches("input,select"))return;if(CODES.some(([c])=>c===e.key)){S.codes[sel]=e.key;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();}});
-setInterval(()=>{if(S.step===4&&S.t0&&!S.locked)$("#clock").textContent=fmtT((Date.now()-S.t0)/1000);},1000);
+  if(el.id==="fPain"){S.pain=el.value;save();}if(el.id==="fSwell"){S.swell=el.value;save();}if(el.id==="fMiss"){S.miss=el.value;save();}if(el.id==="fUrg"){S.urg=el.value;save();}
+  if(el.id==="fCase"){S.cas=el.value;S.truth=null;if(VIEWS.some(v=>S.photos[v.k]&&S.photos[v.k].sample)){makeCase();}S.ran=false;S.max=Math.min(S.max,3);save();renderViews();renderStepsOnly();}
+  if(el.dataset&&el.dataset.up){const f=el.files[0];if(!f)return;const k=el.dataset.up;const {full,small}=await shrink(f);const q=await checkImage(full);S.photos[k]={sample:false,src:small,q};if(!S.truth)makeCase();S.ran=false;S.max=Math.min(S.max,3);save();renderViews();renderStepsOnly();}});
+document.addEventListener("keydown",e=>{if(e.target.matches("input,select"))return;if(S.step===2&&selC&&/^[0-9]$/.test(e.key)){setCli(selC,e.key);return;}if(S.step!==5||!sel||S.locked)return;if(CODES.some(([c])=>c===e.key)){S.codes[sel]=e.key;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();}});
+setInterval(()=>{if(S.step===5&&S.t0&&!S.locked)$("#clock").textContent=fmtT((Date.now()-S.t0)/1000);},1000);
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 render();
 </script>

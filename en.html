@@ -345,6 +345,7 @@ section[data-panel="ai"]>#aiViewer{margin-bottom:0!important}}
 </style>
 <style>
 a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
+.step{padding:8px 9px;gap:7px}.step .t b{font-size:14px}.step .t span{font-size:11px}.step .n{width:26px;height:26px}
 .simbar{background:var(--warn-soft);color:var(--warn);font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
 .view{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
 .view .pic{aspect-ratio:4/3;background:#0b0f12;display:grid;place-items:center;color:#9fb0b8;font-size:13px}
@@ -382,10 +383,20 @@ section>.row{margin-top:16px}
   <div class="fld"><label for="fSwell">Gum or facial swelling in the past 4 weeks?</label><select id="fSwell"><option value="">-- select --</option><option value="0">No</option><option value="1">Yes</option></select></div>
  </div>
 </div>
- <div class="row noprint"><button class="btn pri" data-go="2">Next: five photos →</button></div>
+ <div class="row noprint"><button class="btn pri" data-go="2">Next: clinical examination →</button></div>
 </section>
 
 <section id="s2" hidden>
+ <h1>Clinical examination</h1><p class="lead">The examiner records WHO 2013 crown codes for 28 teeth. This is the reference standard for comparison with the AI. In the real study, the examiner does not see the photos or the AI output, and the dentist reading photos does not see this part; the app shows the examination again only at the Results step.</p>
+ <div class="panel" style="margin-bottom:14px">
+  <div class="row noprint"><button class="btn" id="btnCliSound">Set all to sound (0)</button><button class="btn" id="btnCliSample">Fill from simulated case</button><button class="btn" id="btnCliClear">Clear examination</button><span class="note" id="cliMsg"></span></div>
+  <div class="chartbox" style="margin-top:12px"><div class="jawlab"><span>Patient’s right</span><span>Upper jaw</span><span>Patient’s left</span></div><div class="chart-scroll" style="--nc:7"><div class="arch" id="archCU"></div><div class="archsep"></div><div class="arch" id="archCL"></div></div><div class="jawlab" style="margin-top:4px"><span></span><span>Lower jaw</span><span></span></div><div class="palette" id="palC"></div><div class="chart-tools"><span id="selInfoC"></span><span>WHO 2013 crown codes</span></div></div>
+  <div class="row" style="margin-top:10px"><label for="fUrg" style="margin:0">Intervention urgency (WHO 2013):</label><select id="fUrg" style="width:auto;max-width:100%"><option value="">-- not recorded --</option><option value="0">0 · No treatment needed</option><option value="1">1 · Preventive or routine treatment needed</option><option value="2">2 · Prompt treatment needed (including scaling)</option><option value="3">3 · Immediate treatment needed due to pain or infection</option><option value="4">4 · Referred for comprehensive evaluation or medical/dental treatment</option></select></div>
+ </div>
+ <div class="row noprint"><button class="btn" data-go="1">← Back</button><button class="btn pri" data-go="3">Next: five photos →</button><span class="note">You can skip this step when you only want to present the AI part.</span></div>
+</section>
+
+<section id="s3" hidden>
  <h1>Five intraoral photos</h1><p class="lead">Choose a simulated case and use the sample pictures, or upload real photos into each box. All five views are needed before running the AI.</p>
  <div class="panel" style="margin-bottom:14px">
   <div class="row"><label for="fCase" style="margin:0">Simulated case:</label>
@@ -395,18 +406,18 @@ section>.row{margin-top:16px}
   <p class="note">Sample pictures are schematic drawings that follow the simulated case (dark spot = cavity, grey patch = filling, gap = absent tooth). For real photos you upload, the simulation really checks image quality only; tooth numbering and classification still come from the simulated case.</p>
   <div class="photos" id="views"></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="1">← Back</button><button class="btn pri" id="btnRun" disabled>Run AI (simulated) →</button><span class="note" id="runMsg"></span></div>
+ <div class="row noprint"><button class="btn" data-go="2">← Back</button><button class="btn pri" id="btnRun" disabled>Run AI (simulated) →</button><span class="note" id="runMsg"></span></div>
 </section>
 
-<section id="s3" hidden>
+<section id="s4" hidden>
  <h1>AI analysis</h1><p class="lead">Six processing steps: SegmentAnyTooth numbers the teeth, a model classifies each tooth, then rules compute the index.</p>
  <div class="panel" style="margin-bottom:14px"><ol class="pipe" id="pipe"></ol>
   <div class="row" style="margin-top:10px"><label for="fT" style="margin:0">Decision threshold T = <b id="tVal">0.50</b></label><input type="range" id="fT" min="0.3" max="0.9" step="0.05" value="0.5" style="flex:1;min-width:180px"><span class="note">Higher T → fewer false positives, more missed lesions. In the real study, T is locked before validation.</span></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="2">← Back</button><button class="btn pri" id="btnToChart" disabled>View AI-prefilled chart →</button></div>
+ <div class="row noprint"><button class="btn" data-go="3">← Back</button><button class="btn pri" id="btnToChart" disabled>View AI-prefilled chart →</button></div>
 </section>
 
-<section id="s4" hidden>
+<section id="s5" hidden>
  <h1>Dentist review and confirmation</h1><p class="lead">The AI suggests, the dentist decides. Click a tooth, then choose a code (or press a number key) to edit.</p>
  <div class="panel" style="margin-bottom:14px">
   <div class="row" style="justify-content:space-between"><span class="pill mute">AI-prefilled chart</span><span class="row"><span class="note" style="margin:0">Time</span><span class="clock" id="clock">0:00</span></span></div>
@@ -414,16 +425,16 @@ section>.row{margin-top:16px}
   <div class="chartbox"><div class="jawlab"><span>Patient’s right</span><span>Upper jaw</span><span>Patient’s left</span></div><div class="chart-scroll" style="--nc:7"><div class="arch" id="archU"></div><div class="archsep"></div><div class="arch" id="archL"></div></div><div class="jawlab" style="margin-top:4px"><span></span><span>Lower jaw</span><span></span></div><div class="palette" id="pal"></div><div class="chart-tools"><span id="selInfo">Click a tooth, then choose a code. Keys <span class="kbd">0</span>–<span class="kbd">9</span>.</span><span><span class="pill warn">?</span> AI uncertain · yellow outline = edited</span></div></div>
   <div class="row" style="margin-top:10px"><label for="fMiss" style="margin:0">Reason for absent teeth (ask the participant):</label><select id="fMiss" style="width:auto"><option value="">no absent teeth / not asked</option><option value="caries">lost due to caries</option><option value="other">other reason (orthodontics, trauma, unerupted)</option><option value="unk">unknown</option></select></div>
  </div>
- <div class="row noprint"><button class="btn" data-go="3">← Back</button><button class="btn lock" id="btnConfirm">Confirm and lock record →</button></div>
+ <div class="row noprint"><button class="btn" data-go="4">← Back</button><button class="btn lock" id="btnConfirm">Confirm and lock record →</button></div>
 </section>
 
-<section id="s5" hidden>
+<section id="s6" hidden>
  <h1>Results</h1><p class="lead">DMFT on 28 teeth, treatment need and usage information.</p>
  <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">DMFT index (28 teeth)</h2><div class="dmft" id="kpi"></div><p class="note" id="mNote"></p>
   <h2>Treatment need</h2><div id="need"></div><div id="needTeeth" class="note" style="margin-top:6px"></div>
   <h2>Usage</h2><div id="useBox" class="note"></div></div>
- <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">Validation demo: comparison with clinical examination (reference standard)</h2>
-  <p class="note">In the real study, the examiner records WHO 2013 codes independently, without seeing the photos or the AI output. Here, press the button to load the “examination result” of the simulated case and see how the measures are calculated.</p>
+ <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">Comparison with clinical examination (reference standard)</h2>
+  <p class="note" id="refNote"></p>
   <button class="btn noprint" id="btnRef">Load simulated examination and compare</button><div id="cmp" style="margin-top:10px"></div></div>
  <div class="row noprint"><button class="btn" id="btnJson">Download .json</button><button class="btn" id="btnCsv">Download .csv (by tooth)</button><button class="btn" onclick="print()">Print record</button><button class="btn pri" id="btnNew2">+ New record</button></div>
 </section>
@@ -435,11 +446,14 @@ const U=[17,16,15,14,13,12,11,21,22,23,24,25,26,27], L=[47,46,45,44,43,42,41,31,
 const VIEWS=[{k:"F",l:"Frontal",t:[13,12,11,21,22,23,43,42,41,31,32,33]},{k:"R",l:"Right buccal",t:[17,16,15,14,13,47,46,45,44,43]},{k:"L",l:"Left buccal",t:[23,24,25,26,27,33,34,35,36,37]},{k:"MX",l:"Upper occlusal",t:U},{k:"MD",l:"Lower occlusal",t:L}];
 const CODES=[["0","Sound"],["1","Decayed"],["2","Filled, with decay"],["3","Filled, no decay"],["4","Absent"],["7","Prosthesis"],["9","Not assessable"]];
 const kind=c=>c==="1"||c==="2"?"D":c==="3"?"F":c==="4"?"M":c==="9"?"X":c==="7"?"X":"S";
-const STEPS=[["1","Information","ID, symptoms"],["2","Five photos","capture, quality check"],["3","AI analysis","numbering, classification"],["4","Dentist confirms","review, edit"],["5","Results","DMFT, treatment need"]];
-const blank=()=>({id:"",age:"",pain:"",swell:"",cas:"2",seed:0,photos:{},truth:null,prob:null,T:0.5,ai0:null,codes:null,miss:"",t0:null,t1:null,locked:false,ref:false,step:1,max:1,ran:false});
+const STEPS=[["1","Information","ID, symptoms"],["2","Clinical exam","WHO 2013 codes"],["3","Five photos","capture, quality check"],["4","AI analysis","numbering, classification"],["5","Dentist confirms","review, edit"],["6","Results","DMFT, treatment need"]];
+const CCODES=[["0","Sound"],["1","Decayed"],["2","Filled, with decay"],["3","Filled, no decay"],["4","Missing due to caries"],["5","Missing, other reason"],["6","Fissure sealant"],["7","Abutment, crown, veneer, implant"],["8","Unerupted"],["9","Not recorded"]];
+const kindC=c=>c==="1"||c==="2"?"D":c==="3"?"F":c==="4"?"M":c==="0"||c==="6"?"S":"X";
+const pn=c=>c==="5"||c==="8"?"4":c==="6"?"0":c; /* map clinical codes to photo codes */
+const blank=()=>({id:"",age:"",pain:"",swell:"",cas:"2",seed:0,photos:{},truth:null,prob:null,T:0.5,ai0:null,codes:null,miss:"",t0:null,t1:null,locked:false,ref:false,step:1,max:1,ran:false,cli:null,cliSample:false,urg:""});
 let S=blank();
-try{const x=JSON.parse(localStorage.getItem("aidmft-sim")||"null");if(x)S=Object.assign(blank(),x);}catch(e){}
-const save=()=>{try{localStorage.setItem("aidmft-sim",JSON.stringify(S));}catch(e){}};
+try{const x=JSON.parse(localStorage.getItem("aidmft-sim3")||"null");if(x)S=Object.assign(blank(),x);}catch(e){}
+const save=()=>{try{localStorage.setItem("aidmft-sim3",JSON.stringify(S));}catch(e){}};
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const hash=s=>{let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
 
@@ -464,7 +478,7 @@ function makeCase(){
     if(c==="3"||c==="2"){if(isAnt&&r()<0.5)pF=0.2+r()*0.35;else pF=0.6+r()*0.39;}
     if(c==="0"&&r()<0.08){pD=0.45+r()*0.4;stain=true;}
     prob[t]={pD:+pD.toFixed(2),pF:+pF.toFixed(2),absent:c==="4",hidden,stain};});
-  S.truth=truth;S.prob=prob;}
+  S.truth=truth;S.prob=prob;if(S.cliSample)S.cli={...truth};}
 function aiCodes(T){const o={};T28.forEach(t=>{const p=S.prob[t];o[t]=p.absent?"4":(p.pD>=T&&p.pF>=T)?"2":p.pD>=T?"1":p.pF>=T?"3":"0";});return o;}
 const needsReview=(t,T)=>{const p=S.prob[t];return !p.absent&&(Math.abs(p.pD-T)<0.15||Math.abs(p.pF-T)<0.15);};
 
@@ -491,10 +505,10 @@ function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onlo
 /* ----- interface ----- */
 function go(n){if(n>S.max)return;S.step=n;save();render();window.scrollTo(0,0);}
 function render(){
-  $("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";
-  for(let i=1;i<=5;i++)$("#s"+i).hidden=i!==S.step;
-  $("#fId").value=S.id;$("#fAge").value=S.age;$("#fPain").value=S.pain;$("#fSwell").value=S.swell;$("#fCase").value=S.cas;$("#fMiss").value=S.miss;
-  if(S.step===2)renderViews();if(S.step===3)renderPipe(false);if(S.step===4)renderChart();if(S.step===5)renderResult();}
+  $("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===6&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===6&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";
+  for(let i=1;i<=6;i++)$("#s"+i).hidden=i!==S.step;
+  $("#fId").value=S.id;$("#fAge").value=S.age;$("#fPain").value=S.pain;$("#fSwell").value=S.swell;$("#fCase").value=S.cas;$("#fMiss").value=S.miss;$("#fUrg").value=S.urg;
+  if(S.step===2)renderCli();if(S.step===3)renderViews();if(S.step===4)renderPipe(false);if(S.step===5)renderChart();if(S.step===6)renderResult();}
 function picHTML(v,overlay){const p=S.photos[v.k];if(!p)return`<span>No photo yet</span>`;return p.sample?svgView(v,overlay):`<img src="${p.src}" alt="${v.l}">`;}
 function renderViews(){
   $("#views").innerHTML=VIEWS.map(v=>{const p=S.photos[v.k];const q=!p?"":p.sample?`<span class="pill ok">pass</span>`:(p.q&&p.q.issues.length?`<span class="pill bad" title="${p.q.issues.join(", ")}">${p.q.issues[0]}</span>`:`<span class="pill ok">pass</span>`);
@@ -509,7 +523,16 @@ function renderPipe(animate){const ol=$("#pipe");$("#fT").value=S.T;$("#tVal").t
   clearInterval(pipeTimer);
   if(animate){let k=0;paint(0);$("#btnToChart").disabled=true;pipeTimer=setInterval(()=>{k++;paint(k);if(k>=PIPE.length){clearInterval(pipeTimer);S.ran=true;S.ai0=aiCodes(S.T);$("#btnToChart").disabled=false;save();}},650);}
   else{paint(S.ran?PIPE.length:-1);$("#btnToChart").disabled=!S.ran;}}
-let sel=null;
+let sel=null,selC=null;
+const cliN=()=>S.cli?T28.filter(t=>S.cli[t]!=null&&S.cli[t]!=="").length:0, cliOK=()=>cliN()===28;
+function cliBtn(t){const c=S.cli&&S.cli[t]!=null?S.cli[t]:"";const cls=["tooth","k-"+(c===""?"S":kindC(c))];if(selC===t)cls.push("sel");
+  return`<button type="button" class="${cls.join(" ")}" data-ct="${t}"><span class="tn">${t}</span><span class="tc">${c===""?"–":c}</span><span class="tp"></span></button>`;}
+function renderCli(){const arch=a=>a.slice(0,7).map(cliBtn).join("")+'<span class="mid"></span>'+a.slice(7).map(cliBtn).join("");
+  $("#archCU").innerHTML=arch(U);$("#archCL").innerHTML=arch(L);
+  $("#palC").innerHTML=CCODES.map(([c,l])=>`<button type="button" class="pc k-${kindC(c)}" data-cc="${c}" ${selC?"":"disabled"}><span class="k">${c}</span>${l}</button>`).join("");
+  $("#selInfoC").innerHTML=selC?`Tooth <b class="mono" style="color:var(--fg);font-size:14px">${selC}</b> · choose a code above`:'Click a tooth, then choose a code. Keys <span class="kbd">0</span>–<span class="kbd">9</span>.';
+  const n=cliN();let m=`${n}/28 teeth recorded.`;if(n===28){const i=idx(S.cli);m+=` D = ${i.D}, M = ${i.M}, F = ${i.F}, DMFT = ${i.T}.`;}$("#cliMsg").textContent=m;}
+function setCli(t,c){if(!S.cli)S.cli={};S.cli[t]=c;S.cliSample=false;const i=T28.indexOf(t);selC=T28[Math.min(27,i+1)];save();renderCli();}
 function toothBtn(t){const c=S.codes[t],k=c==="4"?"M":c==="7"||c==="9"?"X":kind(c),p=S.prob[t];const cls=["tooth","k-"+k];if(sel===t)cls.push("sel");const ed=c!==S.ai0[t];if(ed)cls.push("edit");if(S.locked)cls.push("dis");
   const pr=p.absent?"abs":"d "+p.pD.toFixed(2);return`<button type="button" class="${cls.join(" ")}" data-t="${t}" ${S.locked?"disabled":""} title="AI: ${S.ai0[t]} · p(decay) ${p.pD} · p(filling) ${p.pF}"><span class="tn">${t}</span><span class="tc">${c}</span><span class="tp">${pr}</span>${!ed&&needsReview(t,S.T)?'<span class="flag">?</span>':""}</button>`;}
 function renderChart(){
@@ -534,41 +557,49 @@ function renderResult(){const i=idx(S.codes);
   const ch=T28.filter(t=>S.codes[t]!==S.ai0[t]);const sec=S.t0&&S.t1?(S.t1-S.t0)/1000:0;
   $("#useBox").innerHTML=`Review and confirmation time: <b>${fmtT(sec)}</b> · Teeth edited by the dentist vs AI: <b>${ch.length}</b>${ch.length?" ("+ch.map(t=>t+": "+S.ai0[t]+"→"+S.codes[t]).join("; ")+")":""} · Threshold T = ${S.T.toFixed(2)}`;
   renderCmp();}
-function renderCmp(){if(!S.ref){$("#cmp").innerHTML="";return;}
-  const two=c=>{let tp=0,fp=0,fn=0,tn=0;T28.forEach(t=>{const r=kind(S.truth[t])==="D",x=kind(c[t])==="D";if(r&&x)tp++;else if(!r&&x)fp++;else if(r&&!x)fn++;else tn++;});return{tp,fp,fn,tn};};
-  const pc=(a,b)=>b?(100*a/b).toFixed(0)+"%":"–";const C=idx(S.truth),A=idx(S.ai0),F=idx(S.codes);const a=two(S.ai0),f=two(S.codes);
-  const beh={kg:0,sd:0,ss:0,gs:0};T28.forEach(t=>{const ok0=S.ai0[t]===S.truth[t],ok1=S.codes[t]===S.truth[t];if(ok0&&ok1)beh.kg++;else if(!ok0&&ok1)beh.sd++;else if(ok0&&!ok1)beh.ss++;else beh.gs++;});
-  const hid=T28.filter(t=>S.prob[t].hidden).length;
+function renderCmp(){const real=cliOK();const R=real?S.cli:(S.ref?S.truth:null);$("#btnRef").hidden=real;
+  $("#refNote").textContent=real?"The reference standard is the clinical examination entered at step 2 (all 28 teeth).":"The clinical examination at step 2 is incomplete ("+cliN()+"/28). Go back to step 2 to enter it, or press the button to load the “examination result” of the simulated case and see how the measures are calculated.";
+  if(!R){$("#cmp").innerHTML="";return;}
+  const two=c=>{let tp=0,fp=0,fn=0,tn=0;T28.forEach(t=>{const r=kind(R[t])==="D",x=kind(c[t])==="D";if(r&&x)tp++;else if(!r&&x)fp++;else if(r&&!x)fn++;else tn++;});return{tp,fp,fn,tn};};
+  const pc=(a,b)=>b?(100*a/b).toFixed(0)+"%":"–";const C=idx(R),A=idx(S.ai0),F=idx(S.codes);const a=two(S.ai0),f=two(S.codes);
+  const beh={kg:0,sd:0,ss:0,gs:0};T28.forEach(t=>{const ok0=S.ai0[t]===pn(R[t]),ok1=S.codes[t]===pn(R[t]);if(ok0&&ok1)beh.kg++;else if(!ok0&&ok1)beh.sd++;else if(ok0&&!ok1)beh.ss++;else beh.gs++;});
+  const hid=T28.filter(t=>S.prob[t].hidden).length;const nd=c=>idx(c).D>0?"yes":"no";
   $("#cmp").innerHTML=`<div class="tbwrap"><table class="tb"><tr><th></th><th>D</th><th>M</th><th>F</th><th>DMFT</th><th>Difference vs exam</th><th>Sensitivity (decayed teeth)</th><th>Specificity</th></tr>
-  <tr><td>Clinical examination (reference)</td><td class="num">${C.D}</td><td class="num">${C.M}</td><td class="num">${C.F}</td><td class="num"><b>${C.T}</b></td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+  <tr><td>${real?"Clinical examination (reference)":"Clinical examination (simulated)"}</td><td class="num">${C.D}</td><td class="num">${C.M}</td><td class="num">${C.F}</td><td class="num"><b>${C.T}</b></td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
   <tr><td>AI alone</td><td class="num">${A.D}</td><td class="num">${A.M}</td><td class="num">${A.F}</td><td class="num"><b>${A.T}</b></td><td class="num">${A.T-C.T>0?"+":""}${A.T-C.T}</td><td class="num">${pc(a.tp,a.tp+a.fn)} (${a.tp}/${a.tp+a.fn})</td><td class="num">${pc(a.tn,a.tn+a.fp)} (${a.tn}/${a.tn+a.fp})</td></tr>
   <tr><td>After dentist confirmation</td><td class="num">${F.D}</td><td class="num">${F.M}</td><td class="num">${F.F}</td><td class="num"><b>${F.T}</b></td><td class="num">${F.T-C.T>0?"+":""}${F.T-C.T}</td><td class="num">${pc(f.tp,f.tp+f.fn)} (${f.tp}/${f.tp+f.fn})</td><td class="num">${pc(f.tn,f.tn+f.fp)} (${f.tn}/${f.tn+f.fp})</td></tr></table></div>
-  <p class="note">Edit behaviour (28 teeth): AI right – kept ${beh.kg} · AI wrong – corrected ${beh.sd} · AI right – changed to wrong ${beh.ss} · AI wrong – kept ${beh.gs}. In this case ${hid} decayed tooth/teeth cannot be seen on the photos (for example proximal decay): both the AI and a dentist reading photos will find them hard to detect – this is the “performance ceiling” of photos that the study needs to measure.</p>`;}
+  <p class="note">Needs caries treatment (person level): clinical examination <b>${nd(R)}</b> · AI <b>${nd(S.ai0)}</b> · after confirmation <b>${nd(S.codes)}</b>${S.urg!==""?" · WHO intervention urgency recorded by the examiner: <b>"+S.urg+"</b>":""}. On photos, an absent tooth (code 4) is counted in M; the clinical examination counts only code 4 (missing due to caries).</p>
+  <p class="note">Edit behaviour (28 teeth): AI right – kept ${beh.kg} · AI wrong – corrected ${beh.sd} · AI right – changed to wrong ${beh.ss} · AI wrong – kept ${beh.gs}.${!real||S.cliSample?` In this case ${hid} decayed tooth/teeth cannot be seen on the photos (for example proximal decay): both the AI and a dentist reading photos will find them hard to detect – this is the “performance ceiling” of photos that the study needs to measure.`:""}</p>`;}
 function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
-function reset(){if(S.max>1&&!confirm("Start a new record? The current record on this device will be deleted."))return;S=blank();sel=null;save();render();}
+function reset(){selC=null;if(S.max>1&&!confirm("Start a new record? The current record on this device will be deleted."))return;S=blank();sel=null;save();render();}
 
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
-  if(b.dataset.go){const n=+b.dataset.go;if(n===2&&S.step===1){S.max=Math.max(S.max,2);} go(n);return;}
+  if(b.dataset.go){const n=+b.dataset.go;if(n===S.step+1&&S.step<=2){S.max=Math.max(S.max,n);} go(n);return;}
   if(b.id==="btnNew"||b.id==="btnNew2"){reset();return;}
-  if(b.id==="btnSample"){makeCase();VIEWS.forEach(v=>S.photos[v.k]={sample:true});S.ran=false;S.ai0=null;S.codes=null;S.locked=false;S.ref=false;S.max=2;save();renderViews();return;}
-  if(b.id==="btnRun"){if(!S.truth)makeCase();S.ran=false;S.locked=false;S.codes=null;S.ref=false;S.max=3;S.step=3;save();render();renderPipe(true);return;}
-  if(b.id==="btnToChart"){S.ai0=aiCodes(S.T);if(!S.codes||S.locked===false&&!S.t0)S.codes={...S.ai0};if(!S.t0)S.t0=Date.now();S.max=Math.max(S.max,4);go(4);return;}
+  if(b.dataset.ct){selC=+b.dataset.ct;renderCli();return;}
+  if(b.dataset.cc!==undefined&&selC){setCli(selC,b.dataset.cc);return;}
+  if(b.id==="btnCliSound"){S.cli={};T28.forEach(t=>S.cli[t]="0");S.cliSample=false;save();renderCli();return;}
+  if(b.id==="btnCliSample"){if(!S.truth)makeCase();S.cli={...S.truth};S.cliSample=true;save();renderCli();return;}
+  if(b.id==="btnCliClear"){S.cli=null;S.cliSample=false;selC=null;save();renderCli();return;}
+  if(b.id==="btnSample"){makeCase();VIEWS.forEach(v=>S.photos[v.k]={sample:true});S.ran=false;S.ai0=null;S.codes=null;S.locked=false;S.ref=false;S.max=3;save();renderViews();return;}
+  if(b.id==="btnRun"){if(!S.truth)makeCase();S.ran=false;S.locked=false;S.codes=null;S.ref=false;S.max=4;S.step=4;save();render();renderPipe(true);return;}
+  if(b.id==="btnToChart"){S.ai0=aiCodes(S.T);if(!S.codes||S.locked===false&&!S.t0)S.codes={...S.ai0};if(!S.t0)S.t0=Date.now();S.max=Math.max(S.max,5);go(5);return;}
   if(b.dataset.t&&!S.locked){sel=+b.dataset.t;renderChart();return;}
   if(b.dataset.c!==undefined&&sel&&!S.locked){S.codes[sel]=b.dataset.c;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();return;}
-  if(b.id==="btnConfirm"){S.t1=Date.now();S.locked=true;sel=null;S.max=5;go(5);return;}
+  if(b.id==="btnConfirm"){S.t1=Date.now();S.locked=true;sel=null;S.max=6;go(6);return;}
   if(b.id==="btnRef"){S.ref=true;save();renderCmp();return;}
-  if(b.id==="btnJson"){const i=idx(S.codes);dl((S.id||"AI-DMFT")+".json",JSON.stringify({note:"SIMULATION - not real data",id:S.id,age:S.age,pain:S.pain,swelling:S.swell,sim_case:S.cas,threshold_T:S.T,ai_codes:S.ai0,final_codes:S.codes,probabilities:S.prob,D:i.D,M:i.M,F:i.F,DMFT:i.T,missing_reason:S.miss,treatment_need:need(S.codes)[1],seconds:S.t0&&S.t1?(S.t1-S.t0)/1000:null,locked_at:S.t1?new Date(S.t1).toISOString():null},null,1),"application/json");return;}
-  if(b.id==="btnCsv"){dl((S.id||"AI-DMFT")+"_teeth.csv","﻿id,tooth,p_decay,p_filling,ai_code,final_code,needs_review,edited\n"+T28.map(t=>[S.id,t,S.prob[t].pD,S.prob[t].pF,S.ai0[t],S.codes[t],needsReview(t,S.T)?1:0,S.codes[t]!==S.ai0[t]?1:0].join(",")).join("\n"),"text/csv");return;}});
+  if(b.id==="btnJson"){const i=idx(S.codes);dl((S.id||"AI-DMFT")+".json",JSON.stringify({note:"SIMULATION - not real data",id:S.id,age:S.age,pain:S.pain,swelling:S.swell,sim_case:S.cas,threshold_T:S.T,clinical_codes:S.cli,who_urgency:S.urg,ai_codes:S.ai0,final_codes:S.codes,probabilities:S.prob,D:i.D,M:i.M,F:i.F,DMFT:i.T,missing_reason:S.miss,treatment_need:need(S.codes)[1],seconds:S.t0&&S.t1?(S.t1-S.t0)/1000:null,locked_at:S.t1?new Date(S.t1).toISOString():null},null,1),"application/json");return;}
+  if(b.id==="btnCsv"){dl((S.id||"AI-DMFT")+"_teeth.csv","﻿id,tooth,clinical_code,p_decay,p_filling,ai_code,final_code,needs_review,edited\n"+T28.map(t=>[S.id,t,S.cli&&S.cli[t]!=null?S.cli[t]:"",S.prob[t].pD,S.prob[t].pF,S.ai0[t],S.codes[t],needsReview(t,S.T)?1:0,S.codes[t]!==S.ai0[t]?1:0].join(",")).join("\n"),"text/csv");return;}});
 document.addEventListener("input",e=>{const el=e.target;
   if(el.id==="fId"){S.id=el.value.trim();save();}if(el.id==="fAge"){S.age=el.value;save();}
-  if(el.id==="fT"){S.T=+el.value;$("#tVal").textContent=S.T.toFixed(2);if(S.ran){S.ai0=aiCodes(S.T);if(!S.locked){S.codes=null;S.t0=null;S.max=3;}renderPipe(false);renderStepsOnly();}save();}});
-function renderStepsOnly(){$("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";}
+  if(el.id==="fT"){S.T=+el.value;$("#tVal").textContent=S.T.toFixed(2);if(S.ran){S.ai0=aiCodes(S.T);if(!S.locked){S.codes=null;S.t0=null;S.max=4;}renderPipe(false);renderStepsOnly();}save();}});
+function renderStepsOnly(){$("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===6&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===6&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";}
 document.addEventListener("change",async e=>{const el=e.target;
-  if(el.id==="fPain"){S.pain=el.value;save();}if(el.id==="fSwell"){S.swell=el.value;save();}if(el.id==="fMiss"){S.miss=el.value;save();}
-  if(el.id==="fCase"){S.cas=el.value;S.truth=null;if(VIEWS.some(v=>S.photos[v.k]&&S.photos[v.k].sample)){makeCase();}S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}
-  if(el.dataset&&el.dataset.up){const f=el.files[0];if(!f)return;const k=el.dataset.up;const {full,small}=await shrink(f);const q=await checkImage(full);S.photos[k]={sample:false,src:small,q};if(!S.truth)makeCase();S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}});
-document.addEventListener("keydown",e=>{if(S.step!==4||!sel||S.locked||e.target.matches("input,select"))return;if(CODES.some(([c])=>c===e.key)){S.codes[sel]=e.key;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();}});
-setInterval(()=>{if(S.step===4&&S.t0&&!S.locked)$("#clock").textContent=fmtT((Date.now()-S.t0)/1000);},1000);
+  if(el.id==="fPain"){S.pain=el.value;save();}if(el.id==="fSwell"){S.swell=el.value;save();}if(el.id==="fMiss"){S.miss=el.value;save();}if(el.id==="fUrg"){S.urg=el.value;save();}
+  if(el.id==="fCase"){S.cas=el.value;S.truth=null;if(VIEWS.some(v=>S.photos[v.k]&&S.photos[v.k].sample)){makeCase();}S.ran=false;S.max=Math.min(S.max,3);save();renderViews();renderStepsOnly();}
+  if(el.dataset&&el.dataset.up){const f=el.files[0];if(!f)return;const k=el.dataset.up;const {full,small}=await shrink(f);const q=await checkImage(full);S.photos[k]={sample:false,src:small,q};if(!S.truth)makeCase();S.ran=false;S.max=Math.min(S.max,3);save();renderViews();renderStepsOnly();}});
+document.addEventListener("keydown",e=>{if(e.target.matches("input,select"))return;if(S.step===2&&selC&&/^[0-9]$/.test(e.key)){setCli(selC,e.key);return;}if(S.step!==5||!sel||S.locked)return;if(CODES.some(([c])=>c===e.key)){S.codes[sel]=e.key;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();}});
+setInterval(()=>{if(S.step===5&&S.t0&&!S.locked)$("#clock").textContent=fmtT((Date.now()-S.t0)/1000);},1000);
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 render();
 </script>

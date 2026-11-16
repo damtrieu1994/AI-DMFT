@@ -14,14 +14,15 @@ Dữ liệu chỉ lưu trong trình duyệt của máy đang dùng, không gửi
 3. Settings → Pages → Source: *Deploy from a branch* → Branch: `main`, thư mục `/ (root)` → Save.
 4. Chờ 1–2 phút, mở `https://<tên-tài-khoản>.github.io/ai-dmft/`.
 
-Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-v3` trong `sw.js` thành `v4`.
+Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-v4` trong `sw.js` thành `v5`.
 
 ## Cách dùng để trình bày
 1. **Thông tin**: nhập mã, tuổi, hai câu hỏi đau/sưng.
-2. **Năm ảnh**: chọn ca mô phỏng rồi bấm *Dùng ảnh minh hoạ*, hoặc tải ảnh thật (app kiểm tra thật độ phân giải, độ sáng, độ nét).
-3. **AI phân tích**: xem 6 bước xử lý; kéo ngưỡng T để thấy kết quả thay đổi.
-4. **Nha sĩ xác nhận**: sơ đồ răng điền sẵn; dấu `?` là răng AI không chắc; bấm răng rồi chọn mã (hoặc phím 0–9) để sửa; app bấm giờ.
-5. **Kết quả**: D, M, F, DMFT; nhu cầu điều trị N0/N1/N2/NX; số răng đã sửa; nút *so với khám lâm sàng* minh hoạ cách tính độ nhạy, độ đặc hiệu và hành vi sửa. Tải .json/.csv hoặc in phiếu.
+2. **Khám lâm sàng**: người khám ghi mã thân răng WHO 2013 (0–9) cho 28 răng và mức can thiệp WHO. Đây là chuẩn tham chiếu. Có nút *Điền tất cả là lành* rồi sửa từng răng, hoặc *Điền theo ca mô phỏng* để trình bày nhanh. Có thể bỏ qua bước này.
+3. **Năm ảnh**: chọn ca mô phỏng rồi bấm *Dùng ảnh minh hoạ*, hoặc tải ảnh thật (app kiểm tra thật độ phân giải, độ sáng, độ nét).
+4. **AI phân tích**: xem 6 bước xử lý; kéo ngưỡng T để thấy kết quả thay đổi.
+5. **Nha sĩ xác nhận**: sơ đồ răng điền sẵn; dấu `?` là răng AI không chắc; bấm răng rồi chọn mã (hoặc phím số) để sửa; app bấm giờ. Bước này không hiện kết quả khám lâm sàng.
+6. **Kết quả**: D, M, F, DMFT; nhu cầu điều trị N0/N1/N2/NX; số răng đã sửa; bảng so với khám lâm sàng (độ nhạy, độ đặc hiệu, sai số DMFT, hành vi sửa). Nếu đã nhập đủ 28 răng ở bước 2 thì app dùng kết quả đó; nếu chưa thì có nút lấy kết quả khám của ca mô phỏng. Tải .json/.csv hoặc in phiếu.
 
 ## Phần nào là thật, phần nào giả lập
 | Phần | Trạng thái |
@@ -29,7 +30,7 @@ Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-
 | Giao diện, quy tắc mã răng → DMFT, nhu cầu điều trị, bấm giờ, nhật ký sửa, xuất file | Thật, dùng lại được cho ứng dụng nghiên cứu |
 | Kiểm tra chất lượng ảnh tải lên | Thật nhưng đơn giản (độ phân giải, độ sáng, độ nét) |
 | Đánh số răng, phân loại sâu/trám/vắng, xác suất | **Giả lập** theo ca mẫu |
-| "Kết quả khám lâm sàng" để so sánh | **Giả lập** (tình trạng của ca mẫu) |
+| Phiếu khám lâm sàng (mã WHO 2013, mức can thiệp) | Thật: người khám tự nhập; có thể điền theo ca mẫu để trình bày |
 
 Khi có mô hình thật: thay hàm `makeCase()`/`aiCodes()` trong `index.html` bằng lời gọi tới máy chủ chạy mô hình (trả về xác suất sâu/trám và răng vắng cho 28 răng).
 
@@ -38,7 +39,7 @@ Khi có mô hình thật: thay hàm `makeCase()`/`aiCodes()` trong `index.html` 
 # AI-DMFT (working name) – simulation (English)
 
 A static web page that shows the workflow of the AI-DMFT app in the research proposal:
-five intraoral photos → AI numbers and classifies the teeth → prefilled chart → the dentist reviews and edits → DMFT and treatment need.
+clinical examination (WHO 2013 codes, reference standard) and five intraoral photos → AI numbers and classifies the teeth → prefilled chart → the dentist reviews and edits → DMFT and treatment need.
 
 **This is a simulation.** The "AI" is simulated (numbers generated from a sample case). There is no real model and it must not be used for diagnosis. Data stay in the browser of the device in use.
 
