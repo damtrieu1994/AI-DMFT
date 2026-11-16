@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-DMFT · Simulation</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="theme-color" content="#0b6e74">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: sticky header with 6-step study stepper; one working column (max 1080px); tooth charts scroll inside their own box. */
+:root{
+  --bg:#f2f5f6; --surface:#ffffff; --sunken:#e8eef0; --fg:#13212a; --muted:#576872; --line:#d3dde1;
+  --accent:#0b6e74; --accent-fg:#ffffff; --accent-soft:#d9eeee;
+  --d:#b04a00; --d-soft:#fde3cf; --f:#005f96; --f-soft:#d8e9f5; --m:#2f3d47; --m-fg:#ffffff; --ab:#7f8e98; --ab-soft:#e4e9ec;
+  --mV:#8a4fa3; --mA:#a86d00; --mC:#13212a;
+  --ok:#1b7a3c; --ok-soft:#dcf1e3; --warn:#8f5600; --warn-soft:#fbefd6; --bad:#b3261e; --bad-soft:#fbe2df;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1518; --surface:#162026; --sunken:#1c2930; --fg:#e3ecef; --muted:#97a9b2; --line:#2b3a42;
+  --accent:#4cc3c4; --accent-fg:#04201f; --accent-soft:#16393b;
+  --d:#ff9a5c; --d-soft:#45240f; --f:#6cb6ec; --f-soft:#14304a; --m:#c9d4da; --m-fg:#10181c; --ab:#8796a0; --ab-soft:#26323a;
+  --mV:#d39ae8; --mA:#f0b23d; --mC:#e3ecef;
+  --ok:#6fd48f; --ok-soft:#163524; --warn:#f0b65c; --warn-soft:#3b2c12; --bad:#f2877e; --bad-soft:#401c19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1518; --surface:#162026; --sunken:#1c2930; --fg:#e3ecef; --muted:#97a9b2; --line:#2b3a42;
+  --accent:#4cc3c4; --accent-fg:#04201f; --accent-soft:#16393b;
+  --d:#ff9a5c; --d-soft:#45240f; --f:#6cb6ec; --f-soft:#14304a; --m:#c9d4da; --m-fg:#10181c; --ab:#8796a0; --ab-soft:#26323a;
+  --mV:#d39ae8; --mA:#f0b23d; --mC:#e3ecef;
+  --ok:#6fd48f; --ok-soft:#163524; --warn:#f0b65c; --warn-soft:#3b2c12; --bad:#f2877e; --bad-soft:#401c19; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-block:10px 8px}
+.brand{font-weight:700;letter-spacing:.01em;display:flex;align-items:baseline;gap:6px}
+.brand small{font-weight:500;color:var(--muted);font-size:12px}
+.idnow{font-family:var(--f-mono);font-weight:700;font-size:16px;padding:3px 10px;border-radius:6px;background:var(--sunken)}
+.idnow.demo{background:var(--warn-soft);color:var(--warn)}
+.sp{flex:1}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--sunken);color:var(--muted);white-space:nowrap}
+.chip.cloud{background:var(--accent-soft);color:var(--accent)}
+.chip.dirty{background:var(--warn-soft);color:var(--warn)}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.toggle input{accent-color:var(--accent)}
+nav.steps{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.step{flex:1 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:left;min-width:0}
+.step .n{font-family:var(--f-mono);font-size:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--sunken);color:var(--muted);flex:none}
+.step .t{display:flex;flex-direction:column;line-height:1.2}
+.step .t b{font-size:13px;font-weight:600;white-space:nowrap}
+.step .t span{font-size:11px;color:var(--muted);white-space:nowrap}
+.step[aria-current="page"]{border-color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+.step[aria-current="page"] .n{background:var(--accent);color:var(--accent-fg)}
+.step.st-lock .n{background:var(--ok);color:#fff}
+.step.st-part .n{background:var(--warn-soft);color:var(--warn)}
+.step.list{flex:0 0 auto;margin-left:6px}
+.step.list+.step.list{margin-left:0}
+.guide{display:flex;flex-direction:column;gap:14px;max-width:860px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:4px 18px 14px}
+.gcard h2{margin:14px 0 8px}
+.gl{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.gstep{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.gn{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-family:var(--f-mono);font-weight:700;font-size:18px}
+.gb h3{font-size:16px;margin:6px 0 8px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.who{font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:2px 9px;border-radius:99px}
+.gb ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.gdone{margin:10px 0 0;font-size:13px;color:var(--ok);font-weight:500}
+@media (max-width:520px){.gstep{grid-template-columns:minmax(0,1fr)}.gn{width:32px;height:32px;font-size:15px}}
+main{padding-block:20px 90px}
+h1{font-size:23px;margin:0 0 2px;text-wrap:balance;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:0 0 18px;max-width:70ch}
+h2{font-size:16px;margin:24px 0 10px;text-wrap:balance}
+h3{font-size:14px;margin:0 0 6px}
+.note{font-size:13px;color:var(--muted);margin:4px 0 10px;max-width:80ch}
+.banner{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:10px 14px;border-radius:var(--r);margin:0 0 14px}
+.banner.warn{background:var(--warn-soft);color:var(--warn)}
+.banner.info{background:var(--accent-soft);color:var(--accent)}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.banner.ok{background:var(--ok-soft);color:var(--ok)}
+.banner b{font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 16px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.split{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px;align-items:start}
+@media (max-width:860px){.two,.split{grid-template-columns:minmax(0,1fr)}}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>label{font-size:13px;color:var(--muted)}
+input[type=text],input[type=number],input[type=date],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+textarea{min-height:88px;font-family:var(--f-mono);font-size:13px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.checks{display:flex;flex-direction:column;gap:6px}
+.ck{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+.ck input{margin-top:3px;accent-color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:500;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn.danger{color:var(--bad)}
+.btn.lock{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mono{font-family:var(--f-mono)}
+.idcode{font-family:var(--f-mono);font-size:30px;font-weight:700;letter-spacing:.04em}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.mute{background:var(--sunken);color:var(--muted)}
+.lockbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r);margin-top:14px;background:var(--surface)}
+.lockbar .msg{font-size:13px;color:var(--muted)}
+
+/* ---- tooth chart ---- */
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px}
+.chart-scroll{overflow-x:auto;padding-bottom:4px}
+.arch{display:grid;grid-template-columns:repeat(var(--nc,8),var(--tw,40px)) 10px repeat(var(--nc,8),var(--tw,40px));gap:4px;width:max-content;margin:0 auto}
+.split .arch{--tw:32px;gap:3px}
+.split .tooth{height:46px}
+.split .surfmode .tooth{height:62px}
+.split .tooth .tc{font-size:16px}
+.arch .mid{grid-row:span 1}
+.jawlab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;width:min(100%,712px);margin:0 auto 4px}
+.archsep{height:1px;background:var(--line);margin:8px auto;width:min(100%,712px)}
+.tooth{height:50px;border-radius:7px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;line-height:1.1;position:relative}
+.tooth .tn{font-family:var(--f-mono);font-size:10px;color:var(--muted)}
+.tooth .tc{font-family:var(--f-mono);font-size:18px;font-weight:700}
+.tooth.blank{border-style:dashed;background:transparent}
+.tooth.blank .tc{color:var(--line)}
+.tooth.k-S{background:var(--surface)}
+.tooth.k-D{background:var(--d-soft);border-color:var(--d);color:var(--d)}
+.tooth.k-F{background:var(--f-soft);border-color:var(--f);color:var(--f)}
+.tooth.k-M{background:var(--m);border-color:var(--m);color:var(--m-fg)}
+.tooth.k-M .tn{color:var(--m-fg);opacity:.75}
+.tooth.k-A{background:repeating-linear-gradient(135deg,var(--ab-soft) 0 5px,transparent 5px 10px);border-color:var(--ab);color:var(--ab)}
+.tooth.k-X{border-style:dotted;color:var(--muted);background:var(--sunken)}
+.tooth.k-W{opacity:.75}
+.tooth.sel{outline:3px solid var(--accent);outline-offset:1px;z-index:1}
+.tooth.ghost{opacity:.35;cursor:default}
+.tooth.dis{cursor:default}
+.tooth .flag{position:absolute;top:2px;right:3px;font-size:9px;font-weight:700;color:var(--warn)}
+.tooth.ring{box-shadow:0 0 0 2px var(--bad);border-color:var(--bad)}
+.palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.surfmode .tooth{height:64px;justify-content:flex-start;padding-top:4px;gap:1px}
+.surfmode .tooth .tc{font-size:15px}
+.mini{display:block}
+.modeseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.modeseg button{border:0;background:none;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted)}
+.modeseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.sed{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+@media (max-width:640px){.sed{grid-template-columns:minmax(0,1fr)}}
+.sx{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(3,52px);gap:4px}
+.sx .sb{border:1.5px solid var(--line);border-radius:7px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--muted);line-height:1.15;padding:0}
+.sx .sb b{font-family:var(--f-mono);font-size:17px;color:var(--fg)}
+.sx .sb.k-D{background:var(--d-soft);border-color:var(--d)} .sx .sb.k-D b{color:var(--d)}
+.sx .sb.k-F{background:var(--f-soft);border-color:var(--f)} .sx .sb.k-F b{color:var(--f)}
+.sx .sb.k-SL{background:var(--ok-soft);border-color:var(--ok)}
+.sx .sb.on{outline:3px solid var(--accent);outline-offset:1px}
+.sx .sb.blank{border-style:dashed}
+.sx .ctr{grid-column:2;grid-row:2}
+.sx .t1{grid-column:2;grid-row:1}.sx .b1{grid-column:2;grid-row:3}.sx .l1{grid-column:1;grid-row:2}.sx .r1{grid-column:3;grid-row:2}
+.sx .lab{grid-column:1;grid-row:1;font-family:var(--f-mono);font-weight:700;font-size:20px;display:grid;place-items:center;color:var(--accent)}
+.sedp h4{margin:0 0 6px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.sedp .palette{margin-top:0;margin-bottom:10px}
+.pc{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:7px;padding:5px 10px 5px 6px;background:var(--surface);cursor:pointer;font-size:13px;min-width:0}
+.pc .k{font-family:var(--f-mono);font-weight:700;font-size:15px;width:26px;height:26px;display:grid;place-items:center;border-radius:5px;border:1.5px solid var(--line);flex:none}
+.pc.k-D .k{background:var(--d-soft);border-color:var(--d);color:var(--d)}
+.pc.k-F .k{background:var(--f-soft);border-color:var(--f);color:var(--f)}
+.pc.k-M .k{background:var(--m);border-color:var(--m);color:var(--m-fg)}
+.pc.k-A .k{background:repeating-linear-gradient(135deg,var(--ab-soft) 0 4px,transparent 4px 8px);border-color:var(--ab);color:var(--ab)}
+.pc.k-X .k{border-style:dotted;background:var(--sunken);color:var(--muted)}
+.pc:disabled{opacity:.45;cursor:not-allowed}
+.chart-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:10px;font-size:13px;color:var(--muted)}
+.kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface)}
+.dmft{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+.dm{border:1px solid var(--line);border-radius:8px;padding:6px 12px;min-width:64px;text-align:center;background:var(--surface)}
+.dm b{display:block;font-family:var(--f-mono);font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.dm span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+.dm.tot{border-color:var(--accent);background:var(--accent-soft)}
+.dm.tot b{color:var(--accent)}
+
+/* ---- photos ---- */
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.slot{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.slot-h{padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.slot-h b{font-size:14px} .slot-h .mono{font-size:12px;color:var(--muted)}
+.drop{aspect-ratio:4/3;max-width:100%;background:var(--sunken);display:grid;place-items:center;position:relative;cursor:pointer;border-block:1px dashed var(--line)}
+.drop img{width:100%;height:100%;object-fit:contain;background:#000}
+.drop .ph{color:var(--muted);font-size:13px;text-align:center;padding:12px}
+.drop.over{outline:2px dashed var(--accent);outline-offset:-6px}
+.q4{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:10px 12px;font-size:13px;align-items:center}
+.q4 select{width:auto;padding:3px 6px;font-size:13px}
+.slot-f{padding:8px 12px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.slot-f .meta{flex:1 1 100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:sticky;top:132px}
+.viewer .vimg{aspect-ratio:4/3;background:#0b0f12;display:grid;place-items:center;overflow:hidden;cursor:zoom-in;max-width:100%}
+.viewer .vimg img{width:100%;height:100%;object-fit:contain;transition:transform .15s}
+.viewer .vimg.zoom img{transform:scale(2.2);cursor:zoom-out}
+.viewer .vtabs{display:flex;gap:4px;padding:8px;flex-wrap:wrap}
+.viewer .vtabs button{font-size:12px}
+.viewer .vtabs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.viewer .empty{color:#9fb0b8;font-size:13px;padding:20px;text-align:center}
+@media (max-width:860px){.viewer{position:static}}
+
+/* ---- compare ---- */
+.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.cards3{grid-template-columns:minmax(0,1fr)}}
+.mcard{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px;border-top:4px solid var(--c)}
+.mcard .lab{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.mcard .big{font-family:var(--f-mono);font-size:40px;font-weight:700;line-height:1.1;color:var(--c);font-variant-numeric:tabular-nums}
+.mcard .parts{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.mcard .delta{margin-top:8px;font-size:13px}
+.delta b{font-family:var(--f-mono)}
+.cmp-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px}
+table.cmp{border-collapse:separate;border-spacing:3px;margin:0 auto}
+table.cmp th{font-family:var(--f-mono);font-size:10px;color:var(--muted);font-weight:500}
+table.cmp th.rl{font-family:var(--f-body);font-size:12px;text-align:right;padding-right:6px;white-space:nowrap}
+table.cmp td{width:30px;height:30px;padding:0;text-align:center;font-family:var(--f-mono);font-weight:700;font-size:13px;border-radius:5px;border:1.5px solid var(--line);position:relative}
+table.cmp td.k-D{background:var(--d-soft);border-color:var(--d);color:var(--d)}
+table.cmp td.k-F{background:var(--f-soft);border-color:var(--f);color:var(--f)}
+table.cmp td.k-M{background:var(--m);border-color:var(--m);color:var(--m-fg)}
+table.cmp td.k-A{background:repeating-linear-gradient(135deg,var(--ab-soft) 0 4px,transparent 4px 8px);border-color:var(--ab);color:var(--ab)}
+table.cmp td.k-X{border-style:dotted;background:var(--sunken);color:var(--muted)}
+table.cmp td.mis{box-shadow:0 0 0 2px var(--bad)}
+table.cmp td.gap{border:0;width:8px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-3px;margin-right:5px;border:1.5px solid var(--line)}
+.legend i.k-D{background:var(--d-soft);border-color:var(--d)} .legend i.k-F{background:var(--f-soft);border-color:var(--f)} .legend i.k-M{background:var(--m);border-color:var(--m)}
+.legend i.k-A{background:repeating-linear-gradient(135deg,var(--ab-soft) 0 3px,transparent 3px 6px);border-color:var(--ab)} .legend i.k-X{border-style:dotted;background:var(--sunken)} .legend i.mis{box-shadow:0 0 0 2px var(--bad)}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.st{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.st .v{font-family:var(--f-mono);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.st .l{font-size:12px;color:var(--muted)}
+table.tb{border-collapse:collapse;width:100%;font-size:14px}
+table.tb th,table.tb td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.tb th{font-size:12px;color:var(--muted);font-weight:600;background:var(--sunken)}
+table.tb td.num{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.tbwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.hyp{display:grid;gap:10px}
+.hy{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.hy .t{font-size:14px} .hy .t small{display:block;color:var(--muted);font-size:12px}
+.ci{grid-column:1/-1}
+.ci svg{width:100%;height:44px;display:block}
+.svgbox{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.svgbox svg{width:100%;height:auto;display:block}
+
+/* ---- list ---- */
+tr.cur td{background:var(--accent-soft)}
+.dots{display:flex;gap:3px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line);display:inline-block}
+.dots i.l{background:var(--ok)} .dots i.p{background:var(--warn)}
+.export{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:20px}
+.exp{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.exp h3{margin:0} .exp p{margin:0;font-size:13px;color:var(--muted);flex:1}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:50;max-width:calc(100% - 32px)}
+.modal{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:grid;place-items:center;z-index:60;padding:16px}
+.modal-c{background:var(--surface);border-radius:12px;padding:18px;max-width:440px;width:100%}
+.modal-c p{margin:0 0 12px}
+.busy{position:fixed;inset:0;background:rgb(0 0 0 / .35);display:grid;place-items:center;z-index:70;color:#fff;font-weight:600}
+.codes-ref{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 18px;font-size:13px}
+.codes-ref div{display:flex;gap:8px} .codes-ref b{font-family:var(--f-mono);width:16px;flex:none}
+details.ref summary{cursor:pointer;color:var(--accent);font-size:13px;font-weight:500}
+.edm{position:fixed;inset:0;background:rgb(0 0 0 / .6);z-index:65;display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.edc{background:var(--surface);border-radius:12px;width:min(1100px,100%);max-height:100%;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 300px}
+@media (max-width:820px){.edc{grid-template-columns:minmax(0,1fr)}}
+.edv{background:#0b0f12;display:grid;place-items:center;min-height:300px;padding:10px;position:relative}
+.edv canvas{max-width:100%;max-height:72vh;display:block;touch-action:none}
+.edv canvas.crop{cursor:crosshair}
+.edp{padding:16px;display:flex;flex-direction:column;gap:12px;border-left:1px solid var(--line)}
+.edp h3{margin:0}
+.edg{display:flex;flex-direction:column;gap:6px}
+.edg>b{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.sl{display:grid;grid-template-columns:96px minmax(0,1fr) 38px;gap:8px;align-items:center;font-size:13px}
+.sl input[type=range]{width:100%;accent-color:var(--accent)}
+.sl output{font-family:var(--f-mono);font-size:12px;text-align:right}
+.edited-tag{position:absolute;top:6px;left:6px;font-size:11px;font-weight:600;background:var(--accent);color:var(--accent-fg);padding:2px 7px;border-radius:99px}
+.drop,.vimg{position:relative}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:520px){h1{font-size:20px} .brand small{display:none}}
+<style>
+/* ===== Simple mode: larger, cleaner ===== */
+body{font-size:17px}
+.brand small{display:none}
+.btn{padding:10px 16px;font-size:16px;min-height:44px;border-radius:10px}
+.btn.sm{padding:6px 12px;font-size:14px;min-height:36px}
+input,select,textarea{font-size:16px!important;min-height:44px}
+.fld>label{font-size:15px}
+.ck{font-size:16px;gap:10px}
+.ck input{width:22px;height:22px}
+.banner{font-size:15px}
+.step{padding:10px 14px}
+.step .t b{font-size:15px}
+.step .t span{font-size:12px}
+.step .n{width:28px;height:28px;font-size:14px}
+.chip{font-size:13px;padding:5px 11px}
+h1{font-size:clamp(22px,4vw,28px)}
+body.simple .lead:not(.keep),body.simple .note{display:none}
+body.simple #btnDemo{display:none}
+body[data-urole="doc"] .toggle,body[data-urole="doc"] #btnNewTop{display:none}
+.rolebtn{font-weight:600}
+.rolegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:18px}
+.rolecard{display:flex;flex-direction:column;gap:8px;text-align:left;padding:22px;border:2px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer;font:inherit;color:inherit}
+.rolecard b{font-size:22px}
+.rolecard span{color:var(--muted);font-size:16px}
+.rolecard em{font-style:normal;font-size:13px;color:var(--accent);font-weight:600}
+.rolecard.on,.rolecard:hover{border-color:var(--accent);background:var(--accent-soft)}
+.chonwrap{display:flex;flex-direction:column;gap:10px}
+.chonrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.chonrow.cur{border-color:var(--accent)}
+.chonid{font-weight:700;font-size:18px;min-width:90px}
+.chonst{flex:1;color:var(--muted);font-size:15px;min-width:200px}
+body.simple .toggle,body.simple #btnNew2{display:none}
+main .foot[hidden]{display:none!important}
+@media (max-width:600px){#modeChip{display:none}.rolebtn,.langbtn{padding:6px 10px;min-height:38px;font-size:14px}.bar .btn{padding:8px 12px}}
+.aigrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end}
+.aigrid input{font-size:22px!important;font-weight:700;text-align:center}
+.aitot{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:var(--accent-soft);padding:8px;min-height:72px}
+.aitot b{font-size:30px;line-height:1}.aitot span{font-size:13px;color:var(--accent);font-weight:600}
+@media (max-width:600px){.aigrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.paperbox{margin-bottom:14px}
+.paperrow{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.paperthumb{width:180px;min-height:120px;border-radius:10px;background:var(--sunken);display:grid;place-items:center;overflow:hidden;flex:none}
+.paperthumb span{color:var(--muted);font-size:14px;padding:10px;text-align:center}
+.paperthumb img{width:100%;height:auto;display:block;cursor:zoom-in}
+.paperthumb img.big{position:fixed;inset:5vh 5vw;width:90vw;height:90vh;object-fit:contain;background:#000d;z-index:99;cursor:zoom-out}
+.papertxt{flex:1;min-width:220px}
+.resmount{margin:0 0 16px}
+.rescard{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-radius:14px;background:var(--accent-soft);border:2px solid transparent}
+.rescard.lk{border-color:var(--accent)}
+.rescard.empty{background:var(--sunken)}
+.rescard .rl{display:block;font-weight:700;font-size:16px}
+.rescard .rs{display:block;font-size:13px;color:var(--muted)}
+.rescard .rw{color:var(--muted);font-size:15px}
+.rescard .rv{text-align:right}
+.rescard .rv b{display:block;font-size:34px;line-height:1}
+.rescard .rv span{font-size:14px;color:var(--muted);font-family:var(--f-mono)}
+@media (min-width:900px){section[data-panel="ai"]:not([hidden]){display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0 20px;align-items:start}
+section[data-panel="ai"]>h1,section[data-panel="ai"]>p.lead,section[data-panel="ai"]>.resmount,section[data-panel="ai"]>.lockbar{grid-column:1/-1}
+section[data-panel="ai"]>#aiViewer{margin-bottom:0!important}}
+</style>
+<style>
+a.btn{text-decoration:none;display:inline-flex;align-items:center;color:inherit}
+.simbar{background:var(--warn-soft);color:var(--warn);font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+.view{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.view .pic{aspect-ratio:4/3;background:#0b0f12;display:grid;place-items:center;color:#9fb0b8;font-size:13px}
+.view .pic img,.view .pic svg{width:100%;height:100%;object-fit:cover;display:block}
+.view .cap{padding:7px 10px;font-size:13px;display:flex;justify-content:space-between;gap:6px;align-items:center}
+.pipe{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.pipe li{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:8px;background:var(--sunken);color:var(--muted);font-size:14px}
+.pipe li.run{background:var(--warn-soft);color:var(--fg)}.pipe li.done{background:var(--ok-soft);color:var(--fg)}
+.pipe li i{width:24px;height:24px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-style:normal;font-family:var(--f-mono);font-size:12px;flex:none}
+.pipe li.done i{background:var(--ok);color:#fff}.pipe li.run i{background:var(--accent);color:var(--accent-fg)}
+.tooth{height:58px}.tooth .tp{font-size:9px;color:var(--muted);font-family:var(--f-mono)}.tooth.k-M .tp{color:var(--m-fg);opacity:.75}
+.tooth.edit{box-shadow:0 0 0 2px var(--mA);border-color:var(--mA)}
+.need{border-left:6px solid var(--ok);background:var(--ok-soft);padding:12px 16px;border-radius:var(--r)}
+.need.n1{border-color:var(--warn);background:var(--warn-soft)}.need.n2{border-color:var(--bad);background:var(--bad-soft)}.need.nx{border-color:var(--muted);background:var(--sunken)}
+.need b{font-size:16px}
+.clock{font-family:var(--f-mono);font-weight:700;font-size:20px}
+.fld select{width:100%;padding:8px 10px;font-size:15px}
+section>.row{margin-top:16px}
+@media print{header.bar,.simbar,.noprint{display:none!important}body{background:#fff}main{padding:0}}
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap">
+ <div class="bar-top"><span class="brand">AI-DMFT <small>working name · simulation</small></span><span class="idnow" id="idNow">—</span><span class="sp"></span><a class="btn sm" href="index.html" lang="vi" title="Bản tiếng Việt">VI</a><span class="chip cloud">Saved on this device</span><button class="btn" id="btnNew" type="button">+ New record</button></div>
+ <nav class="steps" id="steps" aria-label="Steps"></nav>
+</div></header>
+<div class="simbar"><div class="wrap"><b>SIMULATION.</b> The “AI” here is simulated to show the workflow; results are not a diagnosis and must not be used for patients.</div></div>
+<main class="wrap">
+<section id="s1">
+ <h1>Information and symptoms</h1><p class="lead">Study ID and two symptom questions. Photos cannot show pain or infection, so the self-report is used to suggest the “needs early examination” level.</p>
+ <div class="panel"><div class="grid">
+  <div class="fld"><label for="fId">Study ID</label><input type="text" id="fId" placeholder="PNT-0001"></div>
+  <div class="fld"><label for="fAge">Age</label><input type="number" id="fAge" min="18" max="35" placeholder="18–24"></div>
+  <div class="fld"><label for="fPain">Toothache in the past 4 weeks?</label><select id="fPain"><option value="">-- select --</option><option value="0">No</option><option value="1">Yes</option></select></div>
+  <div class="fld"><label for="fSwell">Gum or facial swelling in the past 4 weeks?</label><select id="fSwell"><option value="">-- select --</option><option value="0">No</option><option value="1">Yes</option></select></div>
+ </div>
+</div>
+ <div class="row noprint"><button class="btn pri" data-go="2">Next: five photos →</button></div>
+</section>
+
+<section id="s2" hidden>
+ <h1>Five intraoral photos</h1><p class="lead">Choose a simulated case and use the sample pictures, or upload real photos into each box. All five views are needed before running the AI.</p>
+ <div class="panel" style="margin-bottom:14px">
+  <div class="row"><label for="fCase" style="margin:0">Simulated case:</label>
+   <select id="fCase" style="width:auto"><option value="1">Case 1 · little disease</option><option value="2" selected>Case 2 · decay and fillings</option><option value="3">Case 3 · much decay, missing teeth</option><option value="r">Random</option></select>
+   <button class="btn" id="btnSample">Use sample pictures</button>
+   <span class="note">or upload real photos into the boxes below</span></div>
+  <p class="note">Sample pictures are schematic drawings that follow the simulated case (dark spot = cavity, grey patch = filling, gap = absent tooth). For real photos you upload, the simulation really checks image quality only; tooth numbering and classification still come from the simulated case.</p>
+  <div class="photos" id="views"></div>
+ </div>
+ <div class="row noprint"><button class="btn" data-go="1">← Back</button><button class="btn pri" id="btnRun" disabled>Run AI (simulated) →</button><span class="note" id="runMsg"></span></div>
+</section>
+
+<section id="s3" hidden>
+ <h1>AI analysis</h1><p class="lead">Six processing steps: SegmentAnyTooth numbers the teeth, a model classifies each tooth, then rules compute the index.</p>
+ <div class="panel" style="margin-bottom:14px"><ol class="pipe" id="pipe"></ol>
+  <div class="row" style="margin-top:10px"><label for="fT" style="margin:0">Decision threshold T = <b id="tVal">0.50</b></label><input type="range" id="fT" min="0.3" max="0.9" step="0.05" value="0.5" style="flex:1;min-width:180px"><span class="note">Higher T → fewer false positives, more missed lesions. In the real study, T is locked before validation.</span></div>
+ </div>
+ <div class="row noprint"><button class="btn" data-go="2">← Back</button><button class="btn pri" id="btnToChart" disabled>View AI-prefilled chart →</button></div>
+</section>
+
+<section id="s4" hidden>
+ <h1>Dentist review and confirmation</h1><p class="lead">The AI suggests, the dentist decides. Click a tooth, then choose a code (or press a number key) to edit.</p>
+ <div class="panel" style="margin-bottom:14px">
+  <div class="row" style="justify-content:space-between"><span class="pill mute">AI-prefilled chart</span><span class="row"><span class="note" style="margin:0">Time</span><span class="clock" id="clock">0:00</span></span></div>
+  <div class="photos" id="views4" style="margin:12px 0"></div>
+  <div class="chartbox"><div class="jawlab"><span>Patient’s right</span><span>Upper jaw</span><span>Patient’s left</span></div><div class="chart-scroll" style="--nc:7"><div class="arch" id="archU"></div><div class="archsep"></div><div class="arch" id="archL"></div></div><div class="jawlab" style="margin-top:4px"><span></span><span>Lower jaw</span><span></span></div><div class="palette" id="pal"></div><div class="chart-tools"><span id="selInfo">Click a tooth, then choose a code. Keys <span class="kbd">0</span>–<span class="kbd">9</span>.</span><span><span class="pill warn">?</span> AI uncertain · yellow outline = edited</span></div></div>
+  <div class="row" style="margin-top:10px"><label for="fMiss" style="margin:0">Reason for absent teeth (ask the participant):</label><select id="fMiss" style="width:auto"><option value="">no absent teeth / not asked</option><option value="caries">lost due to caries</option><option value="other">other reason (orthodontics, trauma, unerupted)</option><option value="unk">unknown</option></select></div>
+ </div>
+ <div class="row noprint"><button class="btn" data-go="3">← Back</button><button class="btn lock" id="btnConfirm">Confirm and lock record →</button></div>
+</section>
+
+<section id="s5" hidden>
+ <h1>Results</h1><p class="lead">DMFT on 28 teeth, treatment need and usage information.</p>
+ <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">DMFT index (28 teeth)</h2><div class="dmft" id="kpi"></div><p class="note" id="mNote"></p>
+  <h2>Treatment need</h2><div id="need"></div><div id="needTeeth" class="note" style="margin-top:6px"></div>
+  <h2>Usage</h2><div id="useBox" class="note"></div></div>
+ <div class="panel" style="margin-bottom:14px"><h2 style="margin-top:0">Validation demo: comparison with clinical examination (reference standard)</h2>
+  <p class="note">In the real study, the examiner records WHO 2013 codes independently, without seeing the photos or the AI output. Here, press the button to load the “examination result” of the simulated case and see how the measures are calculated.</p>
+  <button class="btn noprint" id="btnRef">Load simulated examination and compare</button><div id="cmp" style="margin-top:10px"></div></div>
+ <div class="row noprint"><button class="btn" id="btnJson">Download .json</button><button class="btn" id="btnCsv">Download .csv (by tooth)</button><button class="btn" onclick="print()">Print record</button><button class="btn pri" id="btnNew2">+ New record</button></div>
+</section>
+</main>
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const U=[17,16,15,14,13,12,11,21,22,23,24,25,26,27], L=[47,46,45,44,43,42,41,31,32,33,34,35,36,37], T28=[...U,...L];
+const VIEWS=[{k:"F",l:"Frontal",t:[13,12,11,21,22,23,43,42,41,31,32,33]},{k:"R",l:"Right buccal",t:[17,16,15,14,13,47,46,45,44,43]},{k:"L",l:"Left buccal",t:[23,24,25,26,27,33,34,35,36,37]},{k:"MX",l:"Upper occlusal",t:U},{k:"MD",l:"Lower occlusal",t:L}];
+const CODES=[["0","Sound"],["1","Decayed"],["2","Filled, with decay"],["3","Filled, no decay"],["4","Absent"],["7","Prosthesis"],["9","Not assessable"]];
+const kind=c=>c==="1"||c==="2"?"D":c==="3"?"F":c==="4"?"M":c==="9"?"X":c==="7"?"X":"S";
+const STEPS=[["1","Information","ID, symptoms"],["2","Five photos","capture, quality check"],["3","AI analysis","numbering, classification"],["4","Dentist confirms","review, edit"],["5","Results","DMFT, treatment need"]];
+const blank=()=>({id:"",age:"",pain:"",swell:"",cas:"2",seed:0,photos:{},truth:null,prob:null,T:0.5,ai0:null,codes:null,miss:"",t0:null,t1:null,locked:false,ref:false,step:1,max:1,ran:false});
+let S=blank();
+try{const x=JSON.parse(localStorage.getItem("aidmft-sim")||"null");if(x)S=Object.assign(blank(),x);}catch(e){}
+const save=()=>{try{localStorage.setItem("aidmft-sim",JSON.stringify(S));}catch(e){}};
+function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const hash=s=>{let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
+
+/* ----- simulated case: true status and AI probabilities ----- */
+function makeCase(){
+  const seed=hash((S.id||"demo")+"|"+S.cas+"|"+(S.cas==="r"?Date.now():1));S.seed=seed;const r=rng(seed);
+  const truth={};T28.forEach(t=>truth[t]="0");
+  const molars=[16,26,36,46,17,27,37,47],pre=[14,15,24,25,34,35,44,45],ant=[11,12,13,21,22,23,31,32,33,41,42,43];
+  const pick=(arr,n)=>{const a=arr.filter(t=>truth[t]==="0");const out=[];while(out.length<n&&a.length)out.push(a.splice(Math.floor(r()*a.length),1)[0]);return out;};
+  let nD=1,nF=0,nM=0,nA=0,nDF=0;
+  if(S.cas==="2"){nD=3;nF=2;nA=1;nDF=1;} if(S.cas==="3"){nD=6;nF=3;nM=2;nA=1;nDF=1;}
+  if(S.cas==="r"){nD=Math.floor(r()*6);nF=Math.floor(r()*4);nM=r()<0.3?1:0;nA=r()<0.4?1:0;nDF=r()<0.4?1:0;}
+  pick(molars,nM).forEach(t=>truth[t]="4");
+  pick([...molars,...pre],nD).forEach(t=>truth[t]="1");
+  pick([...molars,...pre],nF).forEach(t=>truth[t]="3");
+  pick(molars,nDF).forEach(t=>truth[t]="2");
+  pick(ant,nA).forEach(t=>truth[t]=r()<0.5?"3":"1");
+  /* AI probabilities: misses (hidden decay, tooth-coloured anterior fillings) and false positives (stains) */
+  const dec=T28.filter(t=>truth[t]==="1"||truth[t]==="2");const hid=new Set();const nh=Math.round(dec.length*0.2);while(hid.size<nh)hid.add(dec[Math.floor(r()*dec.length)]);
+  const prob={};T28.forEach(t=>{const c=truth[t],isAnt=ant.includes(t);let pD=0.02+r()*0.12,pF=0.02+r()*0.10,hidden=false,stain=false;
+    if(c==="1"||c==="2"){if(hid.has(t)){pD=0.12+r()*0.3;hidden=true;}else pD=0.58+r()*0.41;}
+    if(c==="3"||c==="2"){if(isAnt&&r()<0.5)pF=0.2+r()*0.35;else pF=0.6+r()*0.39;}
+    if(c==="0"&&r()<0.08){pD=0.45+r()*0.4;stain=true;}
+    prob[t]={pD:+pD.toFixed(2),pF:+pF.toFixed(2),absent:c==="4",hidden,stain};});
+  S.truth=truth;S.prob=prob;}
+function aiCodes(T){const o={};T28.forEach(t=>{const p=S.prob[t];o[t]=p.absent?"4":(p.pD>=T&&p.pF>=T)?"2":p.pD>=T?"1":p.pF>=T?"3":"0";});return o;}
+const needsReview=(t,T)=>{const p=S.prob[t];return !p.absent&&(Math.abs(p.pD-T)<0.15||Math.abs(p.pF-T)<0.15);};
+
+/* ----- sample pictures ----- */
+function svgView(v,overlay){
+  const occl=v.k==="MX"||v.k==="MD";const W=400,H=300;let g="";
+  const up=v.t.filter(t=>t<30),lo=v.t.filter(t=>t>30);
+  const draw=(t,x,y,w,h)=>{const c=S.truth?S.truth[t]:"0";const ai=overlay&&S.ai0?S.ai0[t]:null;let s="";
+    if(c!=="4"){s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w,h)*0.28}" fill="#f4efe2" stroke="#cfc6ad" stroke-width="1.5"/>`;
+      if(c==="3"||c==="2")s+=`<rect x="${x+w*0.22}" y="${y+h*0.3}" width="${w*0.56}" height="${h*0.36}" rx="4" fill="#9aa3ad"/>`;
+      if((c==="1"||c==="2")&&!(S.prob&&S.prob[t].hidden))s+=`<ellipse cx="${x+w*0.5}" cy="${y+h*(c==="2"?0.72:0.5)}" rx="${w*0.2}" ry="${h*0.14}" fill="#4a2c17"/>`;
+      if(S.prob&&S.prob[t].stain)s+=`<ellipse cx="${x+w*0.5}" cy="${y+h*0.5}" rx="${w*0.16}" ry="${h*0.1}" fill="#a07a4a" opacity=".8"/>`;}
+    if(overlay){const col=ai==="4"?"#8892a6":kind(ai)==="D"?"#e0483e":kind(ai)==="F"?"#3f7fd9":"#35a36a";
+      s+=`<rect x="${x-2}" y="${y-2}" width="${w+4}" height="${h+4}" rx="6" fill="none" stroke="${col}" stroke-width="2.5" ${ai==="4"?'stroke-dasharray="5 4"':""}/><text x="${x+w/2}" y="${y-6}" font-size="13" text-anchor="middle" fill="#fff" font-family="Arial">${t}</text>`;}
+    return s;};
+  if(occl){const arr=v.t,n=arr.length;arr.forEach((t,i)=>{const a=Math.PI*(i/(n-1));const cx=200-150*Math.cos(a),cy=(v.k==="MX"?235-175*Math.sin(a):60+175*Math.sin(a));const big=[6,7].includes(t%10)?34:[4,5].includes(t%10)?27:22;g+=draw(t,cx-big/2,cy-big/2,big,big);});}
+  else{const row=(arr,y,h)=>{const n=arr.length,w=Math.min(52,340/n);const x0=200-(n*w)/2;arr.forEach((t,i)=>g+=draw(t,x0+i*w+3,y,w-6,h));};row(up,62,78);row(lo,160,72);}
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sample picture: ${v.l}"><rect width="${W}" height="${H}" fill="#5a2a2a"/>${occl?'<ellipse cx="200" cy="150" rx="150" ry="110" fill="#b9585a"/>':'<rect x="20" y="40" width="360" height="215" rx="60" fill="#b9585a"/>'}${g}</svg>`;}
+
+/* ----- real image quality check ----- */
+function checkImage(dataUrl){return new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas");const w=160,h=Math.max(1,Math.round(160*im.height/im.width));c.width=w;c.height=h;const x=c.getContext("2d");x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h).data;let sum=0,g=[];for(let i=0;i<d.length;i+=4){const y=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];g.push(y);sum+=y;}const mean=sum/g.length;let e=0,n=0;for(let yy=1;yy<h-1;yy++)for(let xx=1;xx<w-1;xx++){const i=yy*w+xx;const l=4*g[i]-g[i-1]-g[i+1]-g[i-w]-g[i+w];e+=l*l;n++;}const sharp=e/n;const issues=[];if(im.width<800)issues.push("low resolution");if(mean<60)issues.push("too dark");if(mean>215)issues.push("too bright/glare");if(sharp<40)issues.push("may be blurred");res({w:im.width,h:im.height,mean:Math.round(mean),sharp:Math.round(sharp),issues});};im.onerror=()=>res({issues:["cannot read image"]});im.src=dataUrl;});}
+function shrink(file){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);res({full:fr.result,small:c.toDataURL("image/jpeg",0.8)});};im.src=fr.result;};fr.readAsDataURL(file);});}
+
+/* ----- interface ----- */
+function go(n){if(n>S.max)return;S.step=n;save();render();window.scrollTo(0,0);}
+function render(){
+  $("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";
+  for(let i=1;i<=5;i++)$("#s"+i).hidden=i!==S.step;
+  $("#fId").value=S.id;$("#fAge").value=S.age;$("#fPain").value=S.pain;$("#fSwell").value=S.swell;$("#fCase").value=S.cas;$("#fMiss").value=S.miss;
+  if(S.step===2)renderViews();if(S.step===3)renderPipe(false);if(S.step===4)renderChart();if(S.step===5)renderResult();}
+function picHTML(v,overlay){const p=S.photos[v.k];if(!p)return`<span>No photo yet</span>`;return p.sample?svgView(v,overlay):`<img src="${p.src}" alt="${v.l}">`;}
+function renderViews(){
+  $("#views").innerHTML=VIEWS.map(v=>{const p=S.photos[v.k];const q=!p?"":p.sample?`<span class="pill ok">pass</span>`:(p.q&&p.q.issues.length?`<span class="pill bad" title="${p.q.issues.join(", ")}">${p.q.issues[0]}</span>`:`<span class="pill ok">pass</span>`);
+    return`<div class="view"><div class="pic">${picHTML(v,false)}</div><div class="cap"><b>${v.l}</b>${q}</div><div class="cap noprint"><label class="btn sm">Upload<input type="file" accept="image/*" data-up="${v.k}" hidden></label>${p&&!p.sample&&p.q&&p.q.w?`<span class="note">${p.q.w}×${p.q.h}</span>`:""}</div></div>`;}).join("");
+  const n=VIEWS.filter(v=>S.photos[v.k]).length;$("#btnRun").disabled=n<5;$("#runMsg").textContent=n<5?`${n}/5 photos.`:"All 5 photos ready.";}
+const PIPE=["Image quality check: all 5 views, sharpness, lighting","Tooth numbering and segmentation (SegmentAnyTooth)","Crop each tooth in each view","Classify each tooth: decay · filling · prosthesis","Merge several views of the same tooth","Apply rules: tooth code → D, M, F → DMFT → treatment need"];
+let pipeTimer=null;
+function renderPipe(animate){const ol=$("#pipe");$("#fT").value=S.T;$("#tVal").textContent=S.T.toFixed(2);
+  const detail=()=>{const c=aiCodes(S.T);const pres=T28.filter(t=>c[t]!=="4").length;const rv=T28.filter(t=>needsReview(t,S.T)).length;const d=T28.filter(t=>kind(c[t])==="D").length,f=T28.filter(t=>kind(c[t])==="F").length;
+    return["5/5 views",pres+"/28 teeth found, "+(28-pres)+" absent position(s)",VIEWS.reduce((a,v)=>a+v.t.filter(t=>c[t]!=="4").length,0)+" tooth crops","decayed: "+d+" · filled: "+f,rv+" teeth to review","DMFT = "+(d+f+(28-pres))];};
+  const paint=k=>{const det=S.ran||k>=0?detail():[];ol.innerHTML=PIPE.map((p,i)=>`<li class="${i<k?"done":i===k?"run":""}"><i>${i<k?"✓":i+1}</i><span>${p}${i<k?` — <b>${det[i]}</b>`:""}</span></li>`).join("");};
+  clearInterval(pipeTimer);
+  if(animate){let k=0;paint(0);$("#btnToChart").disabled=true;pipeTimer=setInterval(()=>{k++;paint(k);if(k>=PIPE.length){clearInterval(pipeTimer);S.ran=true;S.ai0=aiCodes(S.T);$("#btnToChart").disabled=false;save();}},650);}
+  else{paint(S.ran?PIPE.length:-1);$("#btnToChart").disabled=!S.ran;}}
+let sel=null;
+function toothBtn(t){const c=S.codes[t],k=c==="4"?"M":c==="7"||c==="9"?"X":kind(c),p=S.prob[t];const cls=["tooth","k-"+k];if(sel===t)cls.push("sel");const ed=c!==S.ai0[t];if(ed)cls.push("edit");if(S.locked)cls.push("dis");
+  const pr=p.absent?"abs":"d "+p.pD.toFixed(2);return`<button type="button" class="${cls.join(" ")}" data-t="${t}" ${S.locked?"disabled":""} title="AI: ${S.ai0[t]} · p(decay) ${p.pD} · p(filling) ${p.pF}"><span class="tn">${t}</span><span class="tc">${c}</span><span class="tp">${pr}</span>${!ed&&needsReview(t,S.T)?'<span class="flag">?</span>':""}</button>`;}
+function renderChart(){
+  $("#views4").innerHTML=VIEWS.map(v=>`<div class="view"><div class="pic">${picHTML(v,true)}</div><div class="cap"><b>${v.l}</b>${S.photos[v.k]&&S.photos[v.k].sample?'<span class="note">boxes = AI</span>':'<span class="note">real photo: no boxes drawn</span>'}</div></div>`).join("");
+  const arch=a=>a.slice(0,7).map(toothBtn).join("")+'<span class="mid"></span>'+a.slice(7).map(toothBtn).join("");
+  $("#archU").innerHTML=arch(U);$("#archL").innerHTML=arch(L);
+  $("#pal").innerHTML=S.locked?"":CODES.map(([c,l])=>`<button type="button" class="pc k-${c==="4"?"M":c==="7"||c==="9"?"X":kind(c)}" data-c="${c}" ${sel?"":"disabled"}><span class="k">${c}</span>${l}</button>`).join("");
+  $("#selInfo").innerHTML=sel?`Tooth <b class="mono" style="color:var(--fg);font-size:14px">${sel}</b> · AI suggests <b>${S.ai0[sel]}</b> · p(decay) ${S.prob[sel].pD} · p(filling) ${S.prob[sel].pF}`:'Click a tooth, then choose a code. Keys <span class="kbd">0</span>–<span class="kbd">9</span>.';
+  $("#btnConfirm").disabled=S.locked;}
+const idx=c=>{let D=0,M=0,F=0,X=0;T28.forEach(t=>{const k=kind(c[t]);if(k==="D")D++;else if(k==="M")M++;else if(k==="F")F++;if(c[t]==="9")X++;});return{D,M,F,T:D+M+F,X};};
+function need(c){const i=idx(c);const sym=S.pain==="1"||S.swell==="1";if(i.X>0&&i.D===0)return["nx","NX · Needs direct examination","Some teeth cannot be assessed on the photos and no decayed tooth was seen."];
+  if(i.D===0)return["n0","N0 · No caries treatment need seen","No tooth with code 1 or 2. Regular check-ups are still advised."];
+  if(sym)return["n2","N2 · Needs early examination",i.D+" tooth/teeth need caries treatment, and pain or swelling was reported."];
+  return["n1","N1 · Needs treatment",i.D+" tooth/teeth need caries treatment."];}
+const fmtT=s=>Math.floor(s/60)+":"+String(Math.round(s)%60).padStart(2,"0");
+function renderResult(){const i=idx(S.codes);
+  $("#kpi").innerHTML=`<div class="dm"><b>${i.D}</b><span>D · DECAYED</span></div><div class="dm"><b>${i.M}</b><span>M · ABSENT</span></div><div class="dm"><b>${i.F}</b><span>F · FILLED</span></div><div class="dm tot"><b>${i.T}</b><span>DMFT</span></div>`+(i.X?`<div class="dm"><b>${i.X}</b><span>CODE 9</span></div>`:"");
+  $("#mNote").textContent=i.M?({caries:"Absent teeth: participant reports loss due to caries → counted in M.",other:"Absent teeth for another reason by self-report → not counted in M under WHO rules; also report DFT = "+(i.D+i.F)+".",unk:"Reason for absent teeth unknown → M is undetermined; report DFT = "+(i.D+i.F)+" with a note.","":"Reason for absent teeth not asked: photos cannot show whether a tooth was lost to caries or for another reason."})[S.miss]:"";
+  const [cl,ti,tx]=need(S.codes);$("#need").innerHTML=`<div class="need ${cl}"><b>${ti}</b><br>${tx}</div>`;
+  const dT=T28.filter(t=>kind(S.codes[t])==="D"),xT=T28.filter(t=>S.codes[t]==="9");
+  $("#needTeeth").innerHTML=(dT.length?"Teeth needing caries treatment: <b>"+dT.join(", ")+"</b>. ":"")+(xT.length?"Teeth needing direct examination: <b>"+xT.join(", ")+"</b>.":"");
+  const ch=T28.filter(t=>S.codes[t]!==S.ai0[t]);const sec=S.t0&&S.t1?(S.t1-S.t0)/1000:0;
+  $("#useBox").innerHTML=`Review and confirmation time: <b>${fmtT(sec)}</b> · Teeth edited by the dentist vs AI: <b>${ch.length}</b>${ch.length?" ("+ch.map(t=>t+": "+S.ai0[t]+"→"+S.codes[t]).join("; ")+")":""} · Threshold T = ${S.T.toFixed(2)}`;
+  renderCmp();}
+function renderCmp(){if(!S.ref){$("#cmp").innerHTML="";return;}
+  const two=c=>{let tp=0,fp=0,fn=0,tn=0;T28.forEach(t=>{const r=kind(S.truth[t])==="D",x=kind(c[t])==="D";if(r&&x)tp++;else if(!r&&x)fp++;else if(r&&!x)fn++;else tn++;});return{tp,fp,fn,tn};};
+  const pc=(a,b)=>b?(100*a/b).toFixed(0)+"%":"–";const C=idx(S.truth),A=idx(S.ai0),F=idx(S.codes);const a=two(S.ai0),f=two(S.codes);
+  const beh={kg:0,sd:0,ss:0,gs:0};T28.forEach(t=>{const ok0=S.ai0[t]===S.truth[t],ok1=S.codes[t]===S.truth[t];if(ok0&&ok1)beh.kg++;else if(!ok0&&ok1)beh.sd++;else if(ok0&&!ok1)beh.ss++;else beh.gs++;});
+  const hid=T28.filter(t=>S.prob[t].hidden).length;
+  $("#cmp").innerHTML=`<div class="tbwrap"><table class="tb"><tr><th></th><th>D</th><th>M</th><th>F</th><th>DMFT</th><th>Difference vs exam</th><th>Sensitivity (decayed teeth)</th><th>Specificity</th></tr>
+  <tr><td>Clinical examination (reference)</td><td class="num">${C.D}</td><td class="num">${C.M}</td><td class="num">${C.F}</td><td class="num"><b>${C.T}</b></td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+  <tr><td>AI alone</td><td class="num">${A.D}</td><td class="num">${A.M}</td><td class="num">${A.F}</td><td class="num"><b>${A.T}</b></td><td class="num">${A.T-C.T>0?"+":""}${A.T-C.T}</td><td class="num">${pc(a.tp,a.tp+a.fn)} (${a.tp}/${a.tp+a.fn})</td><td class="num">${pc(a.tn,a.tn+a.fp)} (${a.tn}/${a.tn+a.fp})</td></tr>
+  <tr><td>After dentist confirmation</td><td class="num">${F.D}</td><td class="num">${F.M}</td><td class="num">${F.F}</td><td class="num"><b>${F.T}</b></td><td class="num">${F.T-C.T>0?"+":""}${F.T-C.T}</td><td class="num">${pc(f.tp,f.tp+f.fn)} (${f.tp}/${f.tp+f.fn})</td><td class="num">${pc(f.tn,f.tn+f.fp)} (${f.tn}/${f.tn+f.fp})</td></tr></table></div>
+  <p class="note">Edit behaviour (28 teeth): AI right – kept ${beh.kg} · AI wrong – corrected ${beh.sd} · AI right – changed to wrong ${beh.ss} · AI wrong – kept ${beh.gs}. In this case ${hid} decayed tooth/teeth cannot be seen on the photos (for example proximal decay): both the AI and a dentist reading photos will find them hard to detect – this is the “performance ceiling” of photos that the study needs to measure.</p>`;}
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+function reset(){if(S.max>1&&!confirm("Start a new record? The current record on this device will be deleted."))return;S=blank();sel=null;save();render();}
+
+document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.go){const n=+b.dataset.go;if(n===2&&S.step===1){S.max=Math.max(S.max,2);} go(n);return;}
+  if(b.id==="btnNew"||b.id==="btnNew2"){reset();return;}
+  if(b.id==="btnSample"){makeCase();VIEWS.forEach(v=>S.photos[v.k]={sample:true});S.ran=false;S.ai0=null;S.codes=null;S.locked=false;S.ref=false;S.max=2;save();renderViews();return;}
+  if(b.id==="btnRun"){if(!S.truth)makeCase();S.ran=false;S.locked=false;S.codes=null;S.ref=false;S.max=3;S.step=3;save();render();renderPipe(true);return;}
+  if(b.id==="btnToChart"){S.ai0=aiCodes(S.T);if(!S.codes||S.locked===false&&!S.t0)S.codes={...S.ai0};if(!S.t0)S.t0=Date.now();S.max=Math.max(S.max,4);go(4);return;}
+  if(b.dataset.t&&!S.locked){sel=+b.dataset.t;renderChart();return;}
+  if(b.dataset.c!==undefined&&sel&&!S.locked){S.codes[sel]=b.dataset.c;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();return;}
+  if(b.id==="btnConfirm"){S.t1=Date.now();S.locked=true;sel=null;S.max=5;go(5);return;}
+  if(b.id==="btnRef"){S.ref=true;save();renderCmp();return;}
+  if(b.id==="btnJson"){const i=idx(S.codes);dl((S.id||"AI-DMFT")+".json",JSON.stringify({note:"SIMULATION - not real data",id:S.id,age:S.age,pain:S.pain,swelling:S.swell,sim_case:S.cas,threshold_T:S.T,ai_codes:S.ai0,final_codes:S.codes,probabilities:S.prob,D:i.D,M:i.M,F:i.F,DMFT:i.T,missing_reason:S.miss,treatment_need:need(S.codes)[1],seconds:S.t0&&S.t1?(S.t1-S.t0)/1000:null,locked_at:S.t1?new Date(S.t1).toISOString():null},null,1),"application/json");return;}
+  if(b.id==="btnCsv"){dl((S.id||"AI-DMFT")+"_teeth.csv","﻿id,tooth,p_decay,p_filling,ai_code,final_code,needs_review,edited\n"+T28.map(t=>[S.id,t,S.prob[t].pD,S.prob[t].pF,S.ai0[t],S.codes[t],needsReview(t,S.T)?1:0,S.codes[t]!==S.ai0[t]?1:0].join(",")).join("\n"),"text/csv");return;}});
+document.addEventListener("input",e=>{const el=e.target;
+  if(el.id==="fId"){S.id=el.value.trim();save();}if(el.id==="fAge"){S.age=el.value;save();}
+  if(el.id==="fT"){S.T=+el.value;$("#tVal").textContent=S.T.toFixed(2);if(S.ran){S.ai0=aiCodes(S.T);if(!S.locked){S.codes=null;S.t0=null;S.max=3;}renderPipe(false);renderStepsOnly();}save();}});
+function renderStepsOnly(){$("#steps").innerHTML=STEPS.map(([n,a,b])=>`<button type="button" class="step${+n<S.step||(+n===5&&S.locked)?" st-lock":""}" data-go="${n}" ${+n===S.step?'aria-current="page"':""} ${+n>S.max?"disabled":""}><span class="n">${(+n<S.step&&+n<=S.max)||(+n===5&&S.locked)?"✓":n}</span><span class="t"><b>${a}</b><span>${b}</span></span></button>`).join("");$("#idNow").textContent=S.id||"No ID yet";}
+document.addEventListener("change",async e=>{const el=e.target;
+  if(el.id==="fPain"){S.pain=el.value;save();}if(el.id==="fSwell"){S.swell=el.value;save();}if(el.id==="fMiss"){S.miss=el.value;save();}
+  if(el.id==="fCase"){S.cas=el.value;S.truth=null;if(VIEWS.some(v=>S.photos[v.k]&&S.photos[v.k].sample)){makeCase();}S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}
+  if(el.dataset&&el.dataset.up){const f=el.files[0];if(!f)return;const k=el.dataset.up;const {full,small}=await shrink(f);const q=await checkImage(full);S.photos[k]={sample:false,src:small,q};if(!S.truth)makeCase();S.ran=false;S.max=Math.min(S.max,2);save();renderViews();renderStepsOnly();}});
+document.addEventListener("keydown",e=>{if(S.step!==4||!sel||S.locked||e.target.matches("input,select"))return;if(CODES.some(([c])=>c===e.key)){S.codes[sel]=e.key;const i=T28.indexOf(sel);sel=T28[Math.min(27,i+1)];save();renderChart();}});
+setInterval(()=>{if(S.step===4&&S.t0&&!S.locked)$("#clock").textContent=fmtT((Date.now()-S.t0)/1000);},1000);
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+render();
+</script>
+</body>
+</html>

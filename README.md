@@ -6,13 +6,15 @@ năm ảnh trong miệng → AI đánh số răng và phân loại → hồ sơ 
 **Đây là bản mô phỏng.** Phần "AI" là giả lập (sinh số theo ca mẫu), không có mô hình thật, không dùng cho chẩn đoán.
 Dữ liệu chỉ lưu trong trình duyệt của máy đang dùng, không gửi đi đâu.
 
+**Ngôn ngữ:** `index.html` là bản tiếng Việt, `en.html` là bản tiếng Anh; nút EN/VI trên thanh tiêu đề chuyển qua lại và giữ nguyên phiếu đang làm.
+
 ## Đưa lên GitHub Pages
 1. Tạo repository mới (ví dụ `ai-dmft`), để Public.
-2. Add file → Upload files → kéo toàn bộ nội dung thư mục này vào, gồm cả hai thư mục `fonts` và `icons` (`index.html`, `manifest.webmanifest`, `sw.js`, `README.md`) → Commit changes.
+2. Add file → Upload files → kéo toàn bộ nội dung thư mục này vào, gồm cả hai thư mục `fonts` và `icons` (`index.html`, `en.html`, `manifest.webmanifest`, `sw.js`, `README.md`) → Commit changes.
 3. Settings → Pages → Source: *Deploy from a branch* → Branch: `main`, thư mục `/ (root)` → Save.
 4. Chờ 1–2 phút, mở `https://<tên-tài-khoản>.github.io/ai-dmft/`.
 
-Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-v2` trong `sw.js` thành `v3`.
+Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-v3` trong `sw.js` thành `v4`.
 
 ## Cách dùng để trình bày
 1. **Thông tin**: nhập mã, tuổi, hai câu hỏi đau/sưng.
@@ -30,3 +32,17 @@ Khi sửa file và muốn máy đã cài nhận bản mới: đổi `aidmft-sim-
 | "Kết quả khám lâm sàng" để so sánh | **Giả lập** (tình trạng của ca mẫu) |
 
 Khi có mô hình thật: thay hàm `makeCase()`/`aiCodes()` trong `index.html` bằng lời gọi tới máy chủ chạy mô hình (trả về xác suất sâu/trám và răng vắng cho 28 răng).
+
+---
+
+# AI-DMFT (working name) – simulation (English)
+
+A static web page that shows the workflow of the AI-DMFT app in the research proposal:
+five intraoral photos → AI numbers and classifies the teeth → prefilled chart → the dentist reviews and edits → DMFT and treatment need.
+
+**This is a simulation.** The "AI" is simulated (numbers generated from a sample case). There is no real model and it must not be used for diagnosis. Data stay in the browser of the device in use.
+
+- Vietnamese: `index.html` · English: `en.html` (use the EN/VI button in the header; the current record is kept).
+- GitHub Pages: upload all files and the `fonts` and `icons` folders to the repository root, then Settings → Pages → Branch `main`, `/ (root)`.
+- English page: `https://<account>.github.io/<repo>/en.html`
+- To connect a real model later, replace `makeCase()` / `aiCodes()` with a call to the model server (probabilities of decay/filling and absent teeth for 28 teeth). Make the same change in both `index.html` and `en.html`.
